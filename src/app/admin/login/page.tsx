@@ -29,7 +29,7 @@ export default async function LoginPage({
 
         <div className="mt-6 flex justify-center opacity-80">
           <Image
-            src="/brand/wordmark.png"
+            src="/brand/wordmark-amarelo.png"
             alt="Uma história de fé — Senhor Bom Jesus"
             width={220}
             height={43}
