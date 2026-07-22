@@ -32,8 +32,7 @@ export default async function LoginPage({
             src="/brand/wordmark.png"
             alt="Uma história de fé — Senhor Bom Jesus"
             width={220}
-            height={41}
-            className="h-auto w-[220px]"
+            height={43}
             priority
           />
         </div>
