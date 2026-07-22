@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatInt, maskPhone } from "@/lib/format";
 import { RealtimeRefresher } from "@/components/placar/realtime-refresher";
@@ -17,10 +18,26 @@ export default async function PlacarPage() {
 
   if (!sorteio) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#2a0d13] px-6 text-center text-bege">
-        <p className="text-lg font-semibold">
-          Nenhum sorteio cadastrado no momento.
-        </p>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-[#2a0d13] px-6 text-center text-bege">
+        <span className="text-3xl">🎟️</span>
+        <div>
+          <p className="text-[12.5px] font-bold uppercase tracking-[0.16em] text-bege/70">
+            Paróquia Senhor Bom Jesus
+          </p>
+          <p className="mt-2 text-lg font-semibold">
+            Nenhum sorteio cadastrado no momento.
+          </p>
+          <p className="mt-1 text-sm text-bege/60">
+            Assim que um sorteio for criado no painel, o placar aparece aqui
+            automaticamente.
+          </p>
+        </div>
+        <Link
+          href="/admin"
+          className="mt-2 inline-flex items-center gap-2 rounded-full bg-cereja px-5 py-2.5 text-sm font-extrabold text-bege hover:bg-[var(--brand-vinho-deep)]"
+        >
+          Entrar no painel administrativo
+        </Link>
       </div>
     );
   }
@@ -251,6 +268,9 @@ export default async function PlacarPage() {
               </strong>
             </span>
           ) : null}
+          <Link href="/admin" className="underline decoration-bege/30 underline-offset-2 hover:text-bege">
+            Área administrativa
+          </Link>
         </footer>
       </div>
     </div>
