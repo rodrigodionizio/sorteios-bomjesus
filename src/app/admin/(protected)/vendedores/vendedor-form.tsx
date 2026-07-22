@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { formatPhoneInput } from "@/lib/format";
 import { createVendedor, type VendedorFormState } from "./actions";
 
 const initialState: VendedorFormState = {};
@@ -16,11 +17,13 @@ export function VendedorForm() {
   );
   const formRef = useRef<HTMLFormElement>(null);
   const wasPending = useRef(false);
+  const [telefone, setTelefone] = useState("");
 
   useEffect(() => {
     if (wasPending.current && !pending && !state.error) {
       toast.success("Vendedor cadastrado com sucesso.");
       formRef.current?.reset();
+      setTelefone("");
     }
     wasPending.current = pending;
   }, [pending, state]);
@@ -41,7 +44,14 @@ export function VendedorForm() {
           <Label className="text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground">
             Telefone
           </Label>
-          <Input name="telefone" placeholder="(88) 99999-9999" required />
+          <Input
+            name="telefone"
+            placeholder="(33) 98820-3127"
+            inputMode="numeric"
+            value={telefone}
+            onChange={(e) => setTelefone(formatPhoneInput(e.target.value))}
+            required
+          />
           {state.fieldErrors?.telefone ? (
             <p className="text-xs font-semibold text-bad">{state.fieldErrors.telefone}</p>
           ) : null}

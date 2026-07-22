@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { formatInt, maskPhone } from "@/lib/format";
+import { formatInt } from "@/lib/format";
 import { RealtimeRefresher } from "@/components/placar/realtime-refresher";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +45,7 @@ export default async function PlacarPage() {
   const [{ data: ranking }, { data: resumoRows }] = await Promise.all([
     supabase
       .from("vw_ranking_vendedores")
-      .select("*")
+      .select("sorteio_id, vendedor_id, nome, total_vendido, total_reservado, ultima_baixa, posicao")
       .eq("sorteio_id", sorteio.id)
       .order("posicao", { ascending: true }),
     supabase
@@ -171,7 +171,7 @@ export default async function PlacarPage() {
             <div>
               <div className="text-[30px] font-black">{lider.nome}</div>
               <div className="mt-0.5 text-[13px] font-semibold text-[#3a1400]/70">
-                {maskPhone(lider.telefone)}
+                Maior vendedor(a) até agora
               </div>
             </div>
             <div className="text-right">

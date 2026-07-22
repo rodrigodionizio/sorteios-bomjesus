@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSorteioAtual } from "@/lib/sorteio-atual";
-import { formatDateTime, maskPhone } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { SorteioSwitcher } from "@/components/admin/sorteio-switcher";
 import { ApuracaoForm } from "./apuracao-form";
@@ -75,7 +75,7 @@ export default async function ApuracaoPage() {
                   <div className="mt-3.5 border-t border-[#3a1400]/20 pt-3.5">
                     <div className="text-lg font-black">{vendedorCartela.nome}</div>
                     <div className="text-[13px] font-semibold text-[#3a1400]/70">
-                      {maskPhone(vendedorCartela.telefone)}
+                      {vendedorCartela.telefone}
                     </div>
                     <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/40 px-2.5 py-0.5 text-xs font-extrabold">
                       {resultado.cartela_confirmada
@@ -99,7 +99,7 @@ export default async function ApuracaoPage() {
                   <div className="mt-3.5 border-t border-[#3a1400]/20 pt-3.5">
                     <div className="text-lg font-black">{maiorVendedor.nome}</div>
                     <div className="text-[13px] font-semibold text-[#3a1400]/70">
-                      {maskPhone(maiorVendedor.telefone)}
+                      {maiorVendedor.telefone}
                     </div>
                     <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/40 px-2.5 py-0.5 text-xs font-extrabold">
                       🏆 1º lugar no ranking

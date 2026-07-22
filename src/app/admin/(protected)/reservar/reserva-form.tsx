@@ -97,7 +97,8 @@ export function ReservaForm({
             inputMode="numeric"
             value={final}
             onChange={(e) => setFinal(e.target.value)}
-            disabled={tipo === "avulsa"}
+            readOnly={tipo === "avulsa"}
+            className={tipo === "avulsa" ? "bg-muted text-muted-foreground" : undefined}
             required
           />
         </div>
