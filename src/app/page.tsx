@@ -68,8 +68,26 @@ export default async function PlacarPage() {
       )
     : 0;
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: sorteio.nome,
+    description: `Sorteio de cartelas da Paróquia Senhor Bom Jesus — ${formatInt(resumo?.total_vendidas ?? 0)} cartelas confirmadas de ${formatInt(resumo?.total_cartelas_disponiveis ?? sorteio.cartela_max - sorteio.cartela_min + 1)}.`,
+    ...(sorteio.data_sorteio ? { startDate: sorteio.data_sorteio } : {}),
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    organizer: {
+      "@type": "Organization",
+      name: "Paróquia Senhor Bom Jesus",
+    },
+  };
+
   return (
     <div className="min-h-screen bg-[#2a0d13] px-4 py-10 text-bege sm:px-8 lg:px-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <RealtimeRefresher sorteioId={sorteio.id} />
       <h2 className="sr-only">
         Placar ao vivo com o ranking de todos os vendedores de cartelas do

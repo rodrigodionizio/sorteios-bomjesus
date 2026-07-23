@@ -1,12 +1,57 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { antennacond, humming } from "@/lib/fonts";
 import { Toaster } from "@/components/ui/sonner";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Sorteios — Paróquia Senhor Bom Jesus",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Sorteios Bom Jesus — Paróquia Senhor Bom Jesus",
+    template: "%s · Sorteios Bom Jesus",
+  },
   description:
-    "Sistema de gestão e acompanhamento de vendas de cartelas de sorteio.",
+    "Acompanhe ao vivo o ranking de vendedores do sorteio da Paróquia Senhor Bom Jesus — quantas cartelas cada um já confirmou e quem está mais perto de vencer.",
+  applicationName: "Sorteios Bom Jesus",
+  authors: [{ name: "Paróquia Senhor Bom Jesus" }],
+  keywords: [
+    "sorteio",
+    "rifa",
+    "cartelas",
+    "Paróquia Bom Jesus",
+    "gestão de sorteio",
+    "placar de vendedores",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    url: SITE_URL,
+    siteName: "Sorteios Bom Jesus",
+    title: "Sorteios Bom Jesus — Placar ao vivo",
+    description:
+      "Ranking em tempo real dos vendedores do sorteio da Paróquia Senhor Bom Jesus.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sorteios Bom Jesus — Placar ao vivo",
+    description:
+      "Ranking em tempo real dos vendedores do sorteio da Paróquia Senhor Bom Jesus.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#a41d31",
+  colorScheme: "light",
 };
 
 export default function RootLayout({
