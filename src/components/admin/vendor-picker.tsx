@@ -30,7 +30,11 @@ export function VendorPicker({
   return (
     <Select value={currentId} onValueChange={onChange}>
       <SelectTrigger className="w-full max-w-sm border-border bg-secondary py-5 text-base font-bold">
-        <SelectValue placeholder="Selecione um vendedor" />
+        <SelectValue placeholder="Selecione um vendedor">
+          {(value: string | null) =>
+            vendedores.find((v) => v.id === value)?.nome ?? "Selecione um vendedor"
+          }
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         {vendedores.map((v) => (

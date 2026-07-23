@@ -33,7 +33,11 @@ export function SorteioSwitcher({
       }}
     >
       <SelectTrigger className="h-auto rounded-full border-border bg-white px-3.5 py-1.5 text-[13px] font-bold text-vinho-deep shadow-sm">
-        <SelectValue placeholder="Selecionar sorteio" />
+        <SelectValue placeholder="Selecionar sorteio">
+          {(value: string | null) =>
+            sorteios.find((s) => s.id === value)?.nome ?? "Selecionar sorteio"
+          }
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         {sorteios.map((s) => (
