@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { logout } from "@/app/admin/(protected)/actions";
@@ -41,7 +42,13 @@ export function AdminSidebar() {
   return (
     <aside className="flex w-[240px] shrink-0 flex-col gap-6 bg-gradient-to-b from-vinho to-vinho-deep p-4 text-bege">
       <div className="flex items-center gap-2.5 px-1.5">
-        <span className="text-[22px]">🎟️</span>
+        <Image
+          src="/brand/logo-simbolo-mono-claro.svg"
+          alt=""
+          width={28}
+          height={28}
+          className="shrink-0"
+        />
         <div>
           <div className="text-[15.5px] font-black leading-tight">
             Sorteios

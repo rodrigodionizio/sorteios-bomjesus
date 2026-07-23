@@ -1,0 +1,22 @@
+<svg viewBox="0 0 120 120" width="120" height="120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <mask id="tm">
+      <rect width="120" height="120" fill="white"/>
+      <circle cx="35" cy="5" r="7" fill="black"/>
+      <circle cx="35" cy="115" r="7" fill="black"/>
+      <circle cx="35" cy="22.5" r="3.5" fill="black"/>
+      <circle cx="35" cy="37.5" r="3.5" fill="black"/>
+      <circle cx="35" cy="52.5" r="3.5" fill="black"/>
+      <circle cx="35" cy="67.5" r="3.5" fill="black"/>
+      <circle cx="35" cy="82.5" r="3.5" fill="black"/>
+      <circle cx="35" cy="97.5" r="3.5" fill="black"/>
+    </mask>
+  </defs>
+  <g mask="url(#tm)">
+    <path d="M 10 15 A 10 10 0 0 1 20 5 L 35 5 L 35 115 L 20 115 A 10 10 0 0 1 10 105 Z" fill="#7C1524"/>
+    <path d="M 35 5 L 100 5 A 10 10 0 0 1 110 15 L 110 105 A 10 10 0 0 1 100 115 L 35 115 Z" fill="#C82038"/>
+  </g>
+  <text x="72.5" y="64" font-family="'Oswald',sans-serif" font-weight="700" font-size="56" fill="#FBB558" text-anchor="middle" dominant-baseline="central" letter-spacing="-1">65</text>
+  <polygon points="98,15 102,19 98,23 94,19" fill="#FBB558" opacity="0.9"/>
+  <polygon points="98,97 102,101 98,105 94,101" fill="#FBB558" opacity="0.9"/>
+</svg>

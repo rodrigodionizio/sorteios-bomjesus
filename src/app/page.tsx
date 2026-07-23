@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { formatInt } from "@/lib/format";
 import { RealtimeRefresher } from "@/components/placar/realtime-refresher";
@@ -19,7 +20,12 @@ export default async function PlacarPage() {
   if (!sorteio) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-[#2a0d13] px-6 text-center text-bege">
-        <span className="text-3xl">🎟️</span>
+        <Image
+          src="/brand/logo-simbolo-mono-claro.svg"
+          alt="Sorteios Bom Jesus"
+          width={48}
+          height={48}
+        />
         <div>
           <p className="text-[12.5px] font-bold uppercase tracking-[0.16em] text-bege/70">
             Paróquia Senhor Bom Jesus
@@ -97,9 +103,17 @@ export default async function PlacarPage() {
 
       <div className="mx-auto max-w-4xl">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-bege/15 pb-5">
-          <span className="text-[12.5px] font-bold uppercase tracking-[0.16em] text-bege/70">
-            Paróquia Senhor Bom Jesus
-          </span>
+          <div className="flex items-center gap-2">
+            <Image
+              src="/brand/logo-simbolo-mono-claro.svg"
+              alt=""
+              width={22}
+              height={22}
+            />
+            <span className="text-[12.5px] font-bold uppercase tracking-[0.16em] text-bege/70">
+              Paróquia Senhor Bom Jesus
+            </span>
+          </div>
           <div className="flex items-center gap-3.5">
             <span className="inline-flex items-center gap-2 rounded-full bg-cereja px-3.5 py-1.5 text-[13px] font-black uppercase tracking-wide text-bege">
               <span className="h-2 w-2 animate-pulse rounded-full bg-bege motion-reduce:animate-none" />

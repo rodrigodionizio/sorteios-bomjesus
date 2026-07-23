@@ -6,9 +6,11 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function Image() {
-  const fontData = await readFile(
-    join(process.cwd(), "src/fonts/antennacond-black.otf"),
-  );
+  const [fontData, iconData] = await Promise.all([
+    readFile(join(process.cwd(), "src/fonts/antennacond-black.otf")),
+    readFile(join(process.cwd(), "public/icons/icon-512.png")),
+  ]);
+  const iconSrc = `data:image/png;base64,${iconData.toString("base64")}`;
 
   return new ImageResponse(
     (
@@ -25,9 +27,14 @@ export default async function Image() {
           fontFamily: "Antennacond",
         }}
       >
-        <div style={{ display: "flex", fontSize: 64, marginBottom: 18 }}>
-          🎟️
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={iconSrc}
+          alt=""
+          width={112}
+          height={112}
+          style={{ borderRadius: 28, marginBottom: 22 }}
+        />
         <div
           style={{
             display: "flex",

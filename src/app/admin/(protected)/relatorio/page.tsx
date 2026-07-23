@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { getSorteioAtual } from "@/lib/sorteio-atual";
 import { formatInt } from "@/lib/format";
@@ -55,10 +56,23 @@ export default async function RelatorioPage() {
         <PrintButton />
       </div>
 
-      <div className="mx-auto max-w-[820px] border border-[#e4d9c8] bg-[#fffdf8] text-[#241012] shadow-2xl print:border-none print:shadow-none">
-        <div className="flex items-start justify-between gap-4 bg-gradient-to-br from-vinho to-vinho-deep px-8 py-6 text-bege">
+      <div className="relative overflow-hidden border border-[#e4d9c8] bg-[#fffdf8] text-[#241012] shadow-2xl print:border-none print:shadow-none mx-auto max-w-[820px]">
+        <Image
+          src="/brand/logo-simbolo-mono-escuro.svg"
+          alt=""
+          width={200}
+          height={200}
+          className="pointer-events-none absolute -right-6 bottom-6 opacity-[0.05] print:opacity-[0.06]"
+        />
+
+        <div className="relative flex items-start justify-between gap-4 bg-gradient-to-br from-vinho to-vinho-deep px-8 py-6 text-bege">
           <div className="flex items-center gap-2.5">
-            <span className="text-[22px]">🎟️</span>
+            <Image
+              src="/brand/logo-simbolo-mono-claro.svg"
+              alt=""
+              width={30}
+              height={30}
+            />
             <div>
               <div className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-bege/65">
                 Paróquia Senhor Bom Jesus
@@ -243,11 +257,19 @@ export default async function RelatorioPage() {
           </div>
         </div>
 
-        <div className="flex justify-between border-t border-[#e4d9c8] px-8 py-4 font-mono text-[10px] text-[#9c8788]">
-          <span>
-            Relatório {docId} · gerado automaticamente pelo sistema em {emitidoEm}
-          </span>
-          <span>Página 1 de 1</span>
+        <div className="flex items-center justify-between gap-4 border-t border-[#e4d9c8] px-8 py-4">
+          <Image
+            src="/brand/logo-horizontal.svg"
+            alt="Sorteios Bom Jesus"
+            width={140}
+            height={42}
+          />
+          <div className="text-right font-mono text-[10px] text-[#9c8788]">
+            <div>
+              Relatório {docId} · gerado automaticamente pelo sistema em {emitidoEm}
+            </div>
+            <div>Página 1 de 1</div>
+          </div>
         </div>
       </div>
     </div>

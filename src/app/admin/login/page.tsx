@@ -18,7 +18,13 @@ export default async function LoginPage({
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-vinho to-vinho-deep px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <span className="text-3xl">🎟️</span>
+          <Image
+            src="/brand/logo-simbolo-mono-claro.svg"
+            alt="Sorteios Bom Jesus"
+            width={48}
+            height={48}
+            priority
+          />
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-bege/70">
               Paróquia Senhor Bom Jesus
