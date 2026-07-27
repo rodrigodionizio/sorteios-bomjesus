@@ -11,16 +11,21 @@ export async function findLoteSobreposto(
   sorteioId: string,
   numeroInicial: number,
   numeroFinal: number,
+  excludeLoteId?: string,
 ) {
-  const { data } = await supabase
+  let query = supabase
     .from("lotes_cartelas")
     .select("numero_inicial, numero_final, vendedores(nome)")
     .eq("sorteio_id", sorteioId)
     .eq("status", "ativo")
     .lte("numero_inicial", numeroFinal)
-    .gte("numero_final", numeroInicial)
-    .limit(1)
-    .maybeSingle();
+    .gte("numero_final", numeroInicial);
+
+  if (excludeLoteId) {
+    query = query.neq("id", excludeLoteId);
+  }
+
+  const { data } = await query.limit(1).maybeSingle();
 
   return data as
     | {

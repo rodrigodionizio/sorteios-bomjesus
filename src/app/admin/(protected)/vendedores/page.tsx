@@ -5,6 +5,7 @@ import { AdminPageHeader } from "@/components/admin/page-header";
 import { StatusPill } from "@/components/admin/status-pill";
 import { VendedorForm } from "./vendedor-form";
 import { AtivoToggle } from "./ativo-toggle";
+import { EditVendedorDialog } from "./edit-vendedor-dialog";
 
 function initials(nome: string) {
   const parts = nome.trim().split(/\s+/);
@@ -90,7 +91,14 @@ export default async function VendedoresPage({
                       {formatInt(r?.total_vendido ?? 0)}
                     </td>
                     <td className="px-3 py-2.5">
-                      <AtivoToggle vendedorId={v.id} ativo={v.ativo} />
+                      <div className="flex items-center justify-end gap-3">
+                        <EditVendedorDialog
+                          vendedorId={v.id}
+                          nome={v.nome}
+                          telefone={v.telefone}
+                        />
+                        <AtivoToggle vendedorId={v.id} ativo={v.ativo} />
+                      </div>
                     </td>
                   </tr>
                 );

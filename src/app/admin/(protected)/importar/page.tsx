@@ -13,6 +13,7 @@ export default function ImportarPage() {
             variant="outline"
             className="border-border font-bold"
             render={<a href="/templates/planilha-modelo-contingencia.xlsx" download />}
+            nativeButton={false}
           >
             ↓ Baixar modelo (.xlsx)
           </Button>

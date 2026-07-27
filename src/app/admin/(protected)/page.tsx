@@ -46,12 +46,14 @@ export default async function DashboardPage() {
               variant="outline"
               className="border-border font-bold"
               render={<Link href="/admin/vendedores" />}
+              nativeButton={false}
             >
               + Novo vendedor
             </Button>
             <Button
               className="bg-cereja font-extrabold text-white hover:bg-[var(--brand-vinho-deep)]"
               render={<Link href="/admin/reservar" />}
+              nativeButton={false}
             >
               Reservar cartelas
             </Button>

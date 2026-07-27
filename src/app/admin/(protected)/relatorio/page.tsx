@@ -244,7 +244,7 @@ export default async function RelatorioPage() {
           ) : null}
         </div>
 
-        <div className="mt-2.5 grid grid-cols-2 gap-7.5 border-t-2 border-foreground px-8 pb-7.5 pt-6.5">
+        <div className="mt-2.5 grid grid-cols-2 gap-7.5 border-t-2 border-foreground px-8 pb-7.5 pt-6.5 print:pb-20">
           <div className="border-t border-foreground pt-1.5 text-[11px] text-[#6d5658]">
             Assinatura do(a) responsável pela conferência
             <br />
@@ -257,7 +257,9 @@ export default async function RelatorioPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-4 border-t border-[#e4d9c8] px-8 py-4">
+        {/* position:fixed só no @media print faz este bloco se repetir no
+            rodapé de cada página física, em vez de aparecer uma vez só. */}
+        <div className="flex items-center justify-between gap-4 border-t border-[#e4d9c8] bg-[#fffdf8] px-8 py-4 print:fixed print:inset-x-0 print:bottom-0 print:z-10 print:mx-auto print:max-w-[820px]">
           <Image
             src="/brand/logo-horizontal.svg"
             alt="Sorteios Bom Jesus"
@@ -265,10 +267,7 @@ export default async function RelatorioPage() {
             height={42}
           />
           <div className="text-right font-mono text-[10px] text-[#9c8788]">
-            <div>
-              Relatório {docId} · gerado automaticamente pelo sistema em {emitidoEm}
-            </div>
-            <div>Página 1 de 1</div>
+            Relatório {docId} · gerado automaticamente pelo sistema em {emitidoEm}
           </div>
         </div>
       </div>

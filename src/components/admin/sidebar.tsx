@@ -40,7 +40,7 @@ export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex w-[240px] shrink-0 flex-col gap-6 bg-gradient-to-b from-vinho to-vinho-deep p-4 text-bege">
+    <aside className="flex w-[240px] shrink-0 flex-col gap-6 bg-gradient-to-b from-vinho to-vinho-deep p-4 text-bege print:hidden">
       <div className="flex items-center gap-2.5 px-1.5">
         <Image
           src="/brand/logo-simbolo-mono-claro.svg"

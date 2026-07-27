@@ -5,6 +5,7 @@ import { AdminPageHeader } from "@/components/admin/page-header";
 import { SorteioSwitcher } from "@/components/admin/sorteio-switcher";
 import { VendorPicker } from "@/components/admin/vendor-picker";
 import { ReservaForm } from "./reserva-form";
+import { EditLoteDialog } from "./edit-lote-dialog";
 
 export default async function ReservarPage({
   searchParams,
@@ -91,6 +92,7 @@ export default async function ReservarPage({
                     <th className="px-2.5 py-2">Tipo</th>
                     <th className="px-2.5 py-2">Reservado em</th>
                     <th className="px-2.5 py-2">Origem</th>
+                    <th className="px-2.5 py-2" />
                   </tr>
                 </thead>
                 <tbody>
@@ -111,11 +113,19 @@ export default async function ReservarPage({
                       <td className="px-2.5 py-2 capitalize text-muted-foreground">
                         {l.origem}
                       </td>
+                      <td className="px-2.5 py-2 text-right">
+                        <EditLoteDialog
+                          loteId={l.id}
+                          tipoAtual={l.tipo}
+                          numeroInicialAtual={l.numero_inicial}
+                          numeroFinalAtual={l.numero_final}
+                        />
+                      </td>
                     </tr>
                   ))}
                   {(lotes ?? []).length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-2.5 py-6 text-center text-muted-foreground">
+                      <td colSpan={6} className="px-2.5 py-6 text-center text-muted-foreground">
                         Nenhum lote reservado ainda.
                       </td>
                     </tr>

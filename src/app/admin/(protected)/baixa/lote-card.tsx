@@ -120,24 +120,28 @@ export function LoteCard({ lote, baixas }: { lote: Lote; baixas: Baixa[] }) {
           <span>✓</span>
           <span>Baixa completa registrada</span>
         </div>
-      ) : isEmpty ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 px-5 pb-4">
-          <p className="max-w-[42ch] text-[13px] text-muted-foreground">
-            Nenhuma baixa registrada neste lote — confirme tudo de uma vez se
-            o vendedor já prestou contas do bloco inteiro.
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={restantePending}
-            onClick={() => startRestante(() => baixarRestante(lote.id))}
-            className="border-border font-bold"
-          >
-            {restantePending ? "Baixando..." : "Baixar lote inteiro"}
-          </Button>
-        </div>
       ) : (
         <div className="border-t border-border bg-secondary/60 px-5 py-4.5">
+          <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">
+            <p className="max-w-[42ch] text-[13px] text-muted-foreground">
+              {isEmpty
+                ? "Confirme só o que o vendedor já prestou contas — parte do lote ou o bloco inteiro."
+                : `Ainda faltam ${formatInt(lote.quantidade - confirmado)} cartela(s) para confirmar.`}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={restantePending}
+              onClick={() => startRestante(() => baixarRestante(lote.id))}
+              className="border-border font-bold"
+            >
+              {restantePending
+                ? "Baixando..."
+                : isEmpty
+                  ? "Baixar lote inteiro"
+                  : "Baixar tudo que falta"}
+            </Button>
+          </div>
           <form
             ref={formRef}
             action={formAction}

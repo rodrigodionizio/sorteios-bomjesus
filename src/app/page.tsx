@@ -67,6 +67,13 @@ export default async function PlacarPage() {
   const top5resto = resto.slice(0, 4);
   const demais = resto.slice(4);
 
+  const horaAtualizacao = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Fortaleza",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(new Date());
+
   const percentConfirmado = resumo
     ? Math.round(
         (resumo.total_vendidas / Math.max(resumo.total_cartelas_disponiveis, 1)) *
@@ -101,7 +108,7 @@ export default async function PlacarPage() {
         aparecem em lista simples para acompanhamento.
       </h2>
 
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-4xl lg:max-w-6xl">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-bege/15 pb-5">
           <div className="flex items-center gap-2">
             <Image
@@ -221,75 +228,80 @@ export default async function PlacarPage() {
           </p>
         )}
 
-        {top5resto.length > 0 ? (
-          <>
-            <div className="mb-1 mt-8 flex items-baseline justify-between px-1">
-              <span className="text-xs font-bold uppercase tracking-wide text-bege/60">
-                Do 2º ao {top5resto.length + 1}º lugar
-              </span>
-              <small className="text-xs text-bege/60">top 5</small>
+        <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-10">
+          {top5resto.length > 0 ? (
+            <div>
+              <div className="mb-1 mt-8 flex items-baseline justify-between px-1">
+                <span className="text-xs font-bold uppercase tracking-wide text-bege/60">
+                  Do 2º ao {top5resto.length + 1}º lugar
+                </span>
+                <small className="text-xs text-bege/60">top 5</small>
+              </div>
+              <div className="flex flex-col">
+                {top5resto.map((v) => (
+                  <div
+                    key={v.vendedor_id}
+                    className="grid grid-cols-[34px_1fr_auto] items-center gap-3.5 border-b border-bege/15 px-1 py-2.5 last:border-none"
+                  >
+                    <div className="text-center text-sm font-bold text-bege/60">
+                      {v.posicao}º
+                    </div>
+                    <div className="text-[15px] font-bold">
+                      {v.nome}
+                      <span className="ml-2 rounded-full border border-dourado/45 px-1.5 py-0.5 align-middle text-[9.5px] font-bold uppercase tracking-wide text-dourado">
+                        Top 5
+                      </span>
+                    </div>
+                    <div className="text-right text-[15px] font-bold">
+                      {formatInt(v.total_vendido)}
+                      <span className="mt-0.5 block text-[11px] font-normal text-bege/60">
+                        de {formatInt(v.total_reservado)} reservadas
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-col">
-              {top5resto.map((v) => (
-                <div
-                  key={v.vendedor_id}
-                  className="grid grid-cols-[34px_1fr_auto] items-center gap-3.5 border-b border-bege/15 px-1 py-2.5 last:border-none"
-                >
-                  <div className="text-center text-sm font-bold text-bege/60">
-                    {v.posicao}º
-                  </div>
-                  <div className="text-[15px] font-bold">
-                    {v.nome}
-                    <span className="ml-2 rounded-full border border-dourado/45 px-1.5 py-0.5 align-middle text-[9.5px] font-bold uppercase tracking-wide text-dourado">
-                      Top 5
-                    </span>
-                  </div>
-                  <div className="text-right text-[15px] font-bold">
-                    {formatInt(v.total_vendido)}
-                    <span className="mt-0.5 block text-[11px] font-normal text-bege/60">
-                      de {formatInt(v.total_reservado)} reservadas
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        ) : null}
+          ) : null}
 
-        {demais.length > 0 ? (
-          <>
-            <div className="mb-1 mt-8 flex items-baseline justify-between px-1">
-              <span className="text-xs font-bold uppercase tracking-wide text-bege/60">
-                Demais vendedores
-              </span>
-              <small className="text-xs text-bege/60">
-                continue vendendo para subir
-              </small>
-            </div>
-            <div className="flex flex-col">
-              {demais.map((v) => (
-                <div
-                  key={v.vendedor_id}
-                  className="grid grid-cols-[34px_1fr_auto] items-center gap-3.5 border-b border-bege/15 px-1 py-2.5 last:border-none"
-                >
-                  <div className="text-center text-sm font-bold text-bege/60">
-                    {v.posicao}º
+          {demais.length > 0 ? (
+            <div>
+              <div className="mb-1 mt-8 flex items-baseline justify-between px-1">
+                <span className="text-xs font-bold uppercase tracking-wide text-bege/60">
+                  Demais vendedores
+                </span>
+                <small className="text-xs text-bege/60">
+                  continue vendendo para subir
+                </small>
+              </div>
+              <div className="flex flex-col">
+                {demais.map((v) => (
+                  <div
+                    key={v.vendedor_id}
+                    className="grid grid-cols-[34px_1fr_auto] items-center gap-3.5 border-b border-bege/15 px-1 py-2.5 last:border-none"
+                  >
+                    <div className="text-center text-sm font-bold text-bege/60">
+                      {v.posicao}º
+                    </div>
+                    <div className="text-[15px] font-bold">{v.nome}</div>
+                    <div className="text-right text-[15px] font-bold">
+                      {formatInt(v.total_vendido)}
+                      <span className="mt-0.5 block text-[11px] font-normal text-bege/60">
+                        de {formatInt(v.total_reservado)} reservadas
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-[15px] font-bold">{v.nome}</div>
-                  <div className="text-right text-[15px] font-bold">
-                    {formatInt(v.total_vendido)}
-                    <span className="mt-0.5 block text-[11px] font-normal text-bege/60">
-                      de {formatInt(v.total_reservado)} reservadas
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </>
-        ) : null}
+          ) : null}
+        </div>
 
         <footer className="mt-10 flex flex-wrap justify-between gap-2.5 border-t border-bege/15 pt-4.5 text-[12.5px] text-bege/60">
-          <span>Painel atualiza sozinho a cada nova baixa registrada</span>
+          <span>
+            Painel atualiza sozinho a cada nova baixa registrada — última
+            atualização às <strong className="text-bege">{horaAtualizacao}</strong>
+          </span>
           {sorteio.data_sorteio ? (
             <span>
               Sorteio previsto para{" "}
