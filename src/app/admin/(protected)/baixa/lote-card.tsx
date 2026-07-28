@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { PaperclipIcon, CheckIcon, XIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -83,7 +84,9 @@ function SolicitacoesPendentes({ solicitacoes }: { solicitacoes: Solicitacao[] }
             </div>
             <div className="flex items-center gap-2.5">
               {s.comprovante_path ? (
-                <span className="text-[11.5px] font-bold text-vinho-deep">📎 comprovante anexado</span>
+                <span className="inline-flex items-center gap-1 text-[11.5px] font-bold text-vinho-deep">
+                  <PaperclipIcon className="size-3.5" /> comprovante anexado
+                </span>
               ) : null}
               <Button
                 type="button"
@@ -99,9 +102,9 @@ function SolicitacoesPendentes({ solicitacoes }: { solicitacoes: Solicitacao[] }
                     }
                   });
                 }}
-                className="h-8 bg-good-bg px-3 text-[12.5px] font-bold text-good hover:bg-good-bg"
+                className="h-8 gap-1 bg-good-bg px-3 text-[12.5px] font-bold text-good hover:bg-good-bg"
               >
-                ✓ Aprovar
+                <CheckIcon className="size-3.5" /> Aprovar
               </Button>
               <Button
                 type="button"
@@ -120,9 +123,9 @@ function SolicitacoesPendentes({ solicitacoes }: { solicitacoes: Solicitacao[] }
                     }
                   });
                 }}
-                className="h-8 border-bad/30 bg-bad-bg px-3 text-[12.5px] font-bold text-bad hover:bg-bad-bg"
+                className="h-8 gap-1 border-bad/30 bg-bad-bg px-3 text-[12.5px] font-bold text-bad hover:bg-bad-bg"
               >
-                ✕ Rejeitar
+                <XIcon className="size-3.5" /> Rejeitar
               </Button>
             </div>
           </div>
@@ -224,7 +227,7 @@ export function LoteCard({
 
       {isDone ? (
         <div className="flex items-center gap-2 px-5 pb-4 text-[13px] font-bold text-good">
-          <span>✓</span>
+          <CheckIcon className="size-4" />
           <span>Baixa completa registrada</span>
         </div>
       ) : (
@@ -302,7 +305,7 @@ export function LoteCard({
 
             {state.error ? (
               <p className="col-span-full flex items-start gap-2 rounded-md bg-bad-bg px-3 py-2 text-[12.5px] font-semibold text-bad">
-                <span>✕</span>
+                <XIcon className="mt-0.5 size-3.5 shrink-0" />
                 <span>{state.error}</span>
               </p>
             ) : null}

@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
+import { MailIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,7 @@ export function CadastroForm() {
   if (state.aguardandoConfirmacao) {
     return (
       <div className="flex flex-col items-center gap-3 text-center">
-        <span className="text-3xl">📩</span>
+        <MailIcon className="size-8 text-vinho-deep" />
         <h2 className="text-lg font-black">Confira seu e-mail</h2>
         <p className="text-sm text-muted-foreground">
           Mandamos um link de confirmação. Depois de confirmar, é só entrar

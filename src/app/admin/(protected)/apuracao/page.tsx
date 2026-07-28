@@ -1,3 +1,4 @@
+import { InfoIcon, CheckIcon, TriangleAlertIcon, TrophyIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getSorteioAtual } from "@/lib/sorteio-atual";
 import { formatDateTime } from "@/lib/format";
@@ -49,7 +50,7 @@ export default async function ApuracaoPage() {
             </p>
             <ApuracaoForm sorteioId={atual.id} />
             <div className="mt-4 flex items-start gap-2 rounded-lg bg-info-bg px-4 py-3 text-[13px] font-medium text-info">
-              <span>ℹ️</span>
+              <InfoIcon className="mt-0.5 size-4 shrink-0" />
               <span>
                 Se o número sorteado ainda não tiver baixa registrada, o
                 sistema mostra mesmo assim{" "}
@@ -78,9 +79,15 @@ export default async function ApuracaoPage() {
                       {vendedorCartela.telefone}
                     </div>
                     <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/40 px-2.5 py-0.5 text-xs font-extrabold">
-                      {resultado.cartela_confirmada
-                        ? "✓ Venda confirmada"
-                        : "⚠ Venda ainda não confirmada"}
+                      {resultado.cartela_confirmada ? (
+                        <>
+                          <CheckIcon className="size-3.5" /> Venda confirmada
+                        </>
+                      ) : (
+                        <>
+                          <TriangleAlertIcon className="size-3.5" /> Venda ainda não confirmada
+                        </>
+                      )}
                     </span>
                   </div>
                 ) : (
@@ -102,7 +109,7 @@ export default async function ApuracaoPage() {
                       {maiorVendedor.telefone}
                     </div>
                     <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/40 px-2.5 py-0.5 text-xs font-extrabold">
-                      🏆 1º lugar no ranking
+                      <TrophyIcon className="size-3.5" /> 1º lugar no ranking
                     </span>
                   </div>
                 ) : (

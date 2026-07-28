@@ -64,3 +64,15 @@ export async function updateSorteioStatus(
   revalidatePath("/admin/sorteios");
   revalidatePath("/admin");
 }
+
+export async function regenerarCodigoDiretoria(sorteioId: string): Promise<string> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("regenerar_codigo_diretoria", {
+    p_sorteio_id: sorteioId,
+  });
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/sorteios");
+  return data;
+}

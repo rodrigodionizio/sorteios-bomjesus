@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { CheckIcon } from "lucide-react";
 import { regenerarCodigo, desvincularConta } from "./actions";
 
 export function VinculoCell({
@@ -19,8 +20,8 @@ export function VinculoCell({
   if (email) {
     return (
       <div className="flex items-center justify-end gap-3">
-        <span className="text-[12px] font-semibold text-good">
-          ✓ vinculado a {email}
+        <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-good">
+          <CheckIcon className="size-3.5" /> vinculado a {email}
         </span>
         <button
           type="button"

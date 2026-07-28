@@ -282,6 +282,26 @@ export interface Database {
         >;
         Relationships: [];
       };
+      acessos_diretoria: {
+        Row: {
+          id: string;
+          sorteio_id: string;
+          codigo: string;
+          criado_em: string;
+          atualizado_por: string | null;
+        };
+        Insert: {
+          id?: string;
+          sorteio_id: string;
+          codigo: string;
+          criado_em?: string;
+          atualizado_por?: string | null;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["acessos_diretoria"]["Insert"]
+        >;
+        Relationships: [];
+      };
     };
     Views: {
       vw_ranking_vendedores: {
@@ -343,6 +363,15 @@ export interface Database {
         };
         Relationships: [];
       };
+      vw_arrecadacao_diaria: {
+        Row: {
+          sorteio_id: string;
+          dia: string;
+          cartelas_dia: number;
+          valor_dia: number;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       fn_localizar_vendedor_por_cartela: {
@@ -389,6 +418,14 @@ export interface Database {
       rejeitar_solicitacao: {
         Args: { p_solicitacao_id: string; p_motivo: string };
         Returns: undefined;
+      };
+      fn_confirmar_acesso_diretoria: {
+        Args: { p_sorteio_id: string; p_codigo: string };
+        Returns: boolean;
+      };
+      regenerar_codigo_diretoria: {
+        Args: { p_sorteio_id: string };
+        Returns: string;
       };
     };
     Enums: Record<string, never>;

@@ -1,3 +1,4 @@
+import { SearchIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getSorteioAtual } from "@/lib/sorteio-atual";
 import { formatInt } from "@/lib/format";
@@ -45,7 +46,7 @@ export default async function VendedoresPage({
             {vendedores?.length ?? 0} vendedores cadastrados
           </h2>
           <form className="flex items-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2 text-sm">
-            <span>🔍</span>
+            <SearchIcon className="size-4 text-muted-foreground" />
             <input
               type="text"
               name="q"

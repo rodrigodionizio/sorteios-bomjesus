@@ -32,6 +32,7 @@ const NAV_SECTIONS = [
     items: [
       { href: "/admin/apuracao", label: "Apuração" },
       { href: "/", label: "Placar ao vivo" },
+      { href: "/diretoria", label: "Painel da diretoria" },
       { href: "/admin/relatorio", label: "Relatório" },
     ],
   },
@@ -75,7 +76,7 @@ export function AdminSidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  target={item.href === "/" ? "_blank" : undefined}
+                  target={item.href === "/" || item.href === "/diretoria" ? "_blank" : undefined}
                   className={cn(
                     "block rounded-lg px-2.5 py-2 text-sm font-semibold text-bege/85 hover:bg-bege/10",
                     isActive && "bg-bege font-bold text-vinho-deep hover:bg-bege",

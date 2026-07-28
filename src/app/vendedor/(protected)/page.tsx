@@ -1,3 +1,4 @@
+import { ClockIcon, CheckIcon, XIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { formatInt, formatDate } from "@/lib/format";
 import { SolicitarBaixaForm } from "./solicitar-baixa-form";
@@ -8,10 +9,13 @@ const FORMA_LABEL: Record<string, string> = {
   transferencia: "transferência",
 };
 
-const STATUS_LABEL: Record<string, { label: string; className: string }> = {
-  pendente: { label: "● Pendente", className: "bg-dourado/15 text-dourado-deep" },
-  aprovada: { label: "✓ Aprovada", className: "bg-good-bg text-good" },
-  rejeitada: { label: "✕ Rejeitada", className: "bg-bad-bg text-bad" },
+const STATUS_LABEL: Record<
+  string,
+  { label: string; Icon: typeof ClockIcon; className: string }
+> = {
+  pendente: { label: "Pendente", Icon: ClockIcon, className: "bg-dourado/15 text-dourado-deep" },
+  aprovada: { label: "Aprovada", Icon: CheckIcon, className: "bg-good-bg text-good" },
+  rejeitada: { label: "Rejeitada", Icon: XIcon, className: "bg-bad-bg text-bad" },
 };
 
 export default async function VendedorDashboardPage() {
@@ -118,9 +122,9 @@ export default async function VendedorDashboardPage() {
                       : `${s.numero_inicial} – ${s.numero_final}`}
                   </span>
                   <span
-                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${status.className}`}
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${status.className}`}
                   >
-                    {status.label}
+                    <status.Icon className="size-3" /> {status.label}
                   </span>
                 </div>
                 <div className="text-[11.5px] text-muted-foreground">

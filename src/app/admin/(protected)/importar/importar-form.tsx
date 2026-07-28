@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { FileSpreadsheetIcon, CheckIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { validarPlanilha, importarLinhas } from "./actions";
@@ -68,7 +69,7 @@ export function ImportarForm() {
         htmlFor="arquivo"
         className="flex cursor-pointer flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-border bg-secondary px-5 py-9 text-center"
       >
-        <span className="text-3xl">📄</span>
+        <FileSpreadsheetIcon className="size-8 text-vinho-deep" />
         <span className="text-[15px] font-extrabold">
           {report?.arquivo || "Clique para selecionar a planilha (.xlsx)"}
         </span>
@@ -121,10 +122,14 @@ export function ImportarForm() {
                     </td>
                     <td className="px-3 py-2">
                       {r.status === "ok" ? (
-                        <span className="font-bold text-good">✓ Pronta</span>
+                        <span className="inline-flex items-center gap-1 font-bold text-good">
+                          <CheckIcon className="size-3.5" /> Pronta
+                        </span>
                       ) : (
                         <div>
-                          <span className="font-bold text-bad">✕ Conflito</span>
+                          <span className="inline-flex items-center gap-1 font-bold text-bad">
+                            <XIcon className="size-3.5" /> Conflito
+                          </span>
                           <span className="mt-0.5 block text-[11.5px] font-semibold text-bad">
                             {r.erro}
                           </span>

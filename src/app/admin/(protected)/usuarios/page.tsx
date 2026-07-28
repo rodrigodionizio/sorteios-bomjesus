@@ -1,3 +1,4 @@
+import { CrownIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/format";
 import { AdminPageHeader } from "@/components/admin/page-header";
@@ -62,11 +63,17 @@ export default async function UsuariosPage() {
                     <span
                       className={
                         a.role === "superadmin"
-                          ? "rounded-full bg-dourado px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-[#3a1400]"
-                          : "rounded-full bg-bege px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-vinho-deep"
+                          ? "inline-flex items-center gap-1 rounded-full bg-dourado px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-[#3a1400]"
+                          : "inline-flex items-center gap-1 rounded-full bg-bege px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-vinho-deep"
                       }
                     >
-                      {a.role === "superadmin" ? "👑 Superadmin" : "Admin"}
+                      {a.role === "superadmin" ? (
+                        <>
+                          <CrownIcon className="size-3" /> Superadmin
+                        </>
+                      ) : (
+                        "Admin"
+                      )}
                     </span>
                   </td>
                   <td className="px-3 py-2.5">

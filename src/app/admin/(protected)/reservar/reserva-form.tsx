@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { CheckIcon, XIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -121,12 +122,12 @@ export function ReservaForm({
 
       {state.error ? (
         <p className="flex items-start gap-2 rounded-md bg-bad-bg px-3 py-2 text-sm font-semibold text-bad">
-          <span>✕</span>
+          <XIcon className="mt-0.5 size-4 shrink-0" />
           <span>{state.error}</span>
         </p>
       ) : quantidade > 0 ? (
         <p className="flex items-start gap-2 rounded-md bg-good-bg px-3 py-2 text-sm font-semibold text-good">
-          <span>✓</span>
+          <CheckIcon className="mt-0.5 size-4 shrink-0" />
           <span>Pronto para reservar {quantidade} cartela(s).</span>
         </p>
       ) : null}
