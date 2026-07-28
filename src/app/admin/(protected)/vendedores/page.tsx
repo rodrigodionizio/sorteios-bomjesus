@@ -6,6 +6,7 @@ import { StatusPill } from "@/components/admin/status-pill";
 import { VendedorForm } from "./vendedor-form";
 import { AtivoToggle } from "./ativo-toggle";
 import { EditVendedorDialog } from "./edit-vendedor-dialog";
+import { VinculoCell } from "./vinculo-cell";
 
 function initials(nome: string) {
   const parts = nome.trim().split(/\s+/);
@@ -64,6 +65,7 @@ export default async function VendedoresPage({
                 <th className="px-3 py-2.5">Status</th>
                 <th className="px-3 py-2.5">Reservadas</th>
                 <th className="px-3 py-2.5">Confirmadas</th>
+                <th className="px-3 py-2.5">Vínculo</th>
                 <th className="px-3 py-2.5" />
               </tr>
             </thead>
@@ -91,6 +93,13 @@ export default async function VendedoresPage({
                       {formatInt(r?.total_vendido ?? 0)}
                     </td>
                     <td className="px-3 py-2.5">
+                      <VinculoCell
+                        vendedorId={v.id}
+                        email={v.email}
+                        codigoVinculo={v.codigo_vinculo}
+                      />
+                    </td>
+                    <td className="px-3 py-2.5">
                       <div className="flex items-center justify-end gap-3">
                         <EditVendedorDialog
                           vendedorId={v.id}
@@ -105,7 +114,7 @@ export default async function VendedoresPage({
               })}
               {(vendedores ?? []).length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-3 py-6 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">
                     Nenhum vendedor encontrado.
                   </td>
                 </tr>

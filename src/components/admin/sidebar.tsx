@@ -16,6 +16,7 @@ const NAV_SECTIONS = [
     items: [
       { href: "/admin/sorteios", label: "Sorteios" },
       { href: "/admin/vendedores", label: "Vendedores" },
+      { href: "/admin/usuarios", label: "Usuários" },
     ],
   },
   {
@@ -88,14 +89,25 @@ export function AdminSidebar() {
         ))}
       </nav>
 
-      <form action={logout} className="mt-auto px-1.5">
-        <button
-          type="submit"
-          className="text-[13px] font-semibold text-bege/60 hover:text-bege"
+      <div className="mt-auto flex flex-col gap-2.5 px-1.5">
+        <Link
+          href="/admin/conta"
+          className={cn(
+            "text-[13px] font-semibold text-bege/70 hover:text-bege",
+            pathname === "/admin/conta" && "text-bege",
+          )}
         >
-          Sair
-        </button>
-      </form>
+          Minha conta
+        </Link>
+        <form action={logout}>
+          <button
+            type="submit"
+            className="text-[13px] font-semibold text-bege/60 hover:text-bege"
+          >
+            Sair
+          </button>
+        </form>
+      </div>
     </aside>
   );
 }

@@ -108,7 +108,7 @@ export async function baixarRestante(loteId: string) {
       lote_id: loteId,
       numero_inicial: g.inicio,
       numero_final: g.fim,
-      forma_confirmacao: "dinheiro" as const,
+      forma_confirmacao: "pix" as const,
     })),
   );
 
@@ -116,4 +116,28 @@ export async function baixarRestante(loteId: string) {
 
   revalidatePath("/admin/baixa");
   revalidatePath("/admin");
+}
+
+export async function aprovarSolicitacao(solicitacaoId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("aprovar_solicitacao", {
+    p_solicitacao_id: solicitacaoId,
+  });
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/baixa");
+  revalidatePath("/admin");
+}
+
+export async function rejeitarSolicitacao(solicitacaoId: string, motivo: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("rejeitar_solicitacao", {
+    p_solicitacao_id: solicitacaoId,
+    p_motivo: motivo,
+  });
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/baixa");
 }

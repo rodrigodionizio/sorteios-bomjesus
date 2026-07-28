@@ -41,6 +41,9 @@ export interface Database {
           nome: string;
           telefone: string;
           ativo: boolean;
+          user_id: string | null;
+          email: string | null;
+          codigo_vinculo: string | null;
           created_at: string;
         };
         Insert: {
@@ -48,6 +51,9 @@ export interface Database {
           nome: string;
           telefone: string;
           ativo?: boolean;
+          user_id?: string | null;
+          email?: string | null;
+          codigo_vinculo?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["vendedores"]["Insert"]>;
@@ -93,7 +99,12 @@ export interface Database {
           numero_inicial: number;
           numero_final: number;
           quantidade: number;
-          forma_confirmacao: "dinheiro" | "confirmacao_vendedor" | "ambos";
+          forma_confirmacao:
+            | "dinheiro"
+            | "confirmacao_vendedor"
+            | "ambos"
+            | "transferencia"
+            | "pix";
           observacao: string | null;
           registrado_por: string | null;
           created_at: string;
@@ -103,7 +114,12 @@ export interface Database {
           lote_id: string;
           numero_inicial: number;
           numero_final: number;
-          forma_confirmacao?: "dinheiro" | "confirmacao_vendedor" | "ambos";
+          forma_confirmacao?:
+            | "dinheiro"
+            | "confirmacao_vendedor"
+            | "ambos"
+            | "transferencia"
+            | "pix";
           observacao?: string | null;
           registrado_por?: string | null;
           created_at?: string;
@@ -165,16 +181,105 @@ export interface Database {
         Row: {
           id: string;
           nome: string | null;
-          role: "admin";
+          email: string | null;
+          display_name: string | null;
+          cargo: string | null;
+          role: "superadmin" | "admin" | "vendedor";
           created_at: string;
         };
         Insert: {
           id: string;
           nome?: string | null;
-          role?: "admin";
+          email?: string | null;
+          display_name?: string | null;
+          cargo?: string | null;
+          role?: "superadmin" | "admin" | "vendedor";
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["perfis"]["Insert"]>;
+        Relationships: [];
+      };
+      convites: {
+        Row: {
+          id: string;
+          email: string;
+          nome: string | null;
+          role: "admin" | "superadmin";
+          convidado_por: string | null;
+          created_at: string;
+          aceito_em: string | null;
+        };
+        Insert: {
+          id?: string;
+          email: string;
+          nome?: string | null;
+          role?: "admin" | "superadmin";
+          convidado_por?: string | null;
+          created_at?: string;
+          aceito_em?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["convites"]["Insert"]>;
+        Relationships: [];
+      };
+      eventos_auditoria: {
+        Row: {
+          id: string;
+          acao: string;
+          entidade: string | null;
+          entidade_id: string | null;
+          detalhes: Json | null;
+          realizado_por: string | null;
+          realizado_em: string;
+        };
+        Insert: {
+          id?: string;
+          acao: string;
+          entidade?: string | null;
+          entidade_id?: string | null;
+          detalhes?: Json | null;
+          realizado_por?: string | null;
+          realizado_em?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["eventos_auditoria"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      solicitacoes_baixa: {
+        Row: {
+          id: string;
+          lote_id: string;
+          numero_inicial: number;
+          numero_final: number;
+          quantidade: number;
+          forma_alegada: "dinheiro" | "transferencia" | "pix";
+          observacao: string | null;
+          comprovante_path: string | null;
+          status: "pendente" | "aprovada" | "rejeitada";
+          motivo_rejeicao: string | null;
+          solicitado_por: string;
+          solicitado_em: string;
+          analisado_por: string | null;
+          analisado_em: string | null;
+        };
+        Insert: {
+          id?: string;
+          lote_id: string;
+          numero_inicial: number;
+          numero_final: number;
+          forma_alegada: "dinheiro" | "transferencia" | "pix";
+          observacao?: string | null;
+          comprovante_path?: string | null;
+          status?: "pendente" | "aprovada" | "rejeitada";
+          motivo_rejeicao?: string | null;
+          solicitado_por: string;
+          solicitado_em?: string;
+          analisado_por?: string | null;
+          analisado_em?: string | null;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["solicitacoes_baixa"]["Insert"]
+        >;
         Relationships: [];
       };
     };
@@ -204,6 +309,40 @@ export interface Database {
         };
         Relationships: [];
       };
+      vw_lote_progresso: {
+        Row: {
+          lote_id: string;
+          sorteio_id: string;
+          sorteio_nome: string;
+          sorteio_status: "planejado" | "em_andamento" | "encerrado";
+          vendedor_id: string;
+          numero_inicial: number;
+          numero_final: number;
+          quantidade: number;
+          tipo: "bloco" | "avulsa";
+          confirmado: number;
+          pendente: number;
+          solicitado_pendente: number;
+        };
+        Relationships: [];
+      };
+      vw_solicitacoes_pendentes_admin: {
+        Row: {
+          id: string;
+          lote_id: string;
+          sorteio_id: string;
+          vendedor_id: string;
+          vendedor_nome: string;
+          numero_inicial: number;
+          numero_final: number;
+          quantidade: number;
+          forma_alegada: "dinheiro" | "transferencia" | "pix";
+          observacao: string | null;
+          comprovante_path: string | null;
+          solicitado_em: string;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       fn_localizar_vendedor_por_cartela: {
@@ -218,6 +357,38 @@ export interface Database {
       fn_registrar_resultado_sorteio: {
         Args: { p_sorteio_id: string; p_numero_sorteado: number };
         Returns: string;
+      };
+      fn_vincular_vendedor: {
+        Args: { p_telefone: string; p_codigo: string };
+        Returns: boolean;
+      };
+      alterar_papel: {
+        Args: { p_perfil_id: string; p_novo_role: string };
+        Returns: undefined;
+      };
+      regenerar_codigo_vinculo: {
+        Args: { p_vendedor_id: string };
+        Returns: string;
+      };
+      desvincular_vendedor: {
+        Args: { p_vendedor_id: string };
+        Returns: undefined;
+      };
+      remover_acesso: {
+        Args: { p_perfil_id: string };
+        Returns: undefined;
+      };
+      cancelar_convite: {
+        Args: { p_convite_id: string };
+        Returns: undefined;
+      };
+      aprovar_solicitacao: {
+        Args: { p_solicitacao_id: string };
+        Returns: string;
+      };
+      rejeitar_solicitacao: {
+        Args: { p_solicitacao_id: string; p_motivo: string };
+        Returns: undefined;
       };
     };
     Enums: Record<string, never>;

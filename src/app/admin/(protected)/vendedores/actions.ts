@@ -97,3 +97,26 @@ export async function setVendedorAtivo(vendedorId: string, ativo: boolean) {
 
   revalidatePath("/admin/vendedores");
 }
+
+export async function regenerarCodigo(vendedorId: string): Promise<string> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("regenerar_codigo_vinculo", {
+    p_vendedor_id: vendedorId,
+  });
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/vendedores");
+  return data;
+}
+
+export async function desvincularConta(vendedorId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("desvincular_vendedor", {
+    p_vendedor_id: vendedorId,
+  });
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/vendedores");
+}

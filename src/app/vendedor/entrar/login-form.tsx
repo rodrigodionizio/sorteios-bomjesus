@@ -1,17 +1,18 @@
 "use client";
 
 import { useActionState, useRef } from "react";
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { GoogleSigninButton } from "@/components/auth/google-signin-button";
 import { ForgotPasswordButton } from "@/components/auth/forgot-password-button";
-import { login, type LoginState } from "./actions";
+import { loginVendedor, type LoginVendedorState } from "./actions";
 
-const initialState: LoginState = {};
+const initialState: LoginVendedorState = {};
 
 export function LoginForm({ next }: { next: string }) {
-  const [state, formAction, pending] = useActionState(login, initialState);
+  const [state, formAction, pending] = useActionState(loginVendedor, initialState);
   const emailRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -29,7 +30,6 @@ export function LoginForm({ next }: { next: string }) {
             type="email"
             autoComplete="email"
             required
-            placeholder="voce@paroquiabomjesus.org"
             ref={emailRef}
           />
         </div>
@@ -71,7 +71,14 @@ export function LoginForm({ next }: { next: string }) {
         <span className="h-px flex-1 bg-border" />
       </div>
 
-      <GoogleSigninButton next={next} />
+      <GoogleSigninButton next="/vendedor" />
+
+      <p className="mt-1 text-center text-[13px] text-muted-foreground">
+        Primeira vez aqui?{" "}
+        <Link href="/vendedor/cadastro" className="font-bold text-[var(--brand-vinho-deep)] hover:underline">
+          Vincule sua conta
+        </Link>
+      </p>
     </div>
   );
 }

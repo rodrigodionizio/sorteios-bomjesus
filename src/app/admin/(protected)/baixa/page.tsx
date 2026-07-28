@@ -43,6 +43,16 @@ export default async function BaixaPage({
           .order("numero_inicial")
       : { data: [] };
 
+  const { data: solicitacoes } =
+    loteIds.length > 0
+      ? await supabase
+          .from("solicitacoes_baixa")
+          .select("*")
+          .in("lote_id", loteIds)
+          .eq("status", "pendente")
+          .order("solicitado_em")
+      : { data: [] };
+
   const totalReservado = (lotes ?? []).reduce((s, l) => s + l.quantidade, 0);
   const totalConfirmado = (baixas ?? []).reduce((s, b) => s + b.quantidade, 0);
 
@@ -81,6 +91,7 @@ export default async function BaixaPage({
                 key={lote.id}
                 lote={lote}
                 baixas={(baixas ?? []).filter((b) => b.lote_id === lote.id)}
+                solicitacoes={(solicitacoes ?? []).filter((s) => s.lote_id === lote.id)}
               />
             ))}
             {(lotes ?? []).length === 0 ? (

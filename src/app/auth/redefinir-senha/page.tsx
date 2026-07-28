@@ -1,0 +1,36 @@
+import type { Metadata } from "next";
+import Image from "next/image";
+import { RedefinirSenhaForm } from "./redefinir-senha-form";
+
+export const metadata: Metadata = {
+  title: "Redefinir senha",
+  robots: { index: false, follow: false },
+};
+
+export default function RedefinirSenhaPage() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-vinho to-vinho-deep px-4 py-10">
+      <div className="w-full max-w-sm">
+        <div className="mb-6 flex flex-col items-center gap-3 text-center">
+          <Image
+            src="/brand/logo-simbolo-mono-claro.svg"
+            alt="Sorteios Bom Jesus"
+            width={48}
+            height={48}
+            priority
+          />
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-bege/70">
+              Paróquia Senhor Bom Jesus
+            </p>
+            <h1 className="text-2xl font-black text-bege">Nova senha</h1>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-bege/15 bg-white p-7 shadow-2xl">
+          <RedefinirSenhaForm />
+        </div>
+      </div>
+    </div>
+  );
+}

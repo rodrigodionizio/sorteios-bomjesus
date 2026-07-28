@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useTransition } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,13 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatDate, formatInt } from "@/lib/format";
 import { computeGaps } from "@/lib/gaps";
-import { createBaixa, baixarRestante, type BaixaFormState } from "./actions";
+import {
+  createBaixa,
+  baixarRestante,
+  aprovarSolicitacao,
+  rejeitarSolicitacao,
+  type BaixaFormState,
+} from "./actions";
 
 type Lote = {
   id: string;
@@ -27,15 +33,114 @@ type Baixa = {
   created_at: string;
 };
 
+type Solicitacao = {
+  id: string;
+  numero_inicial: number;
+  numero_final: number;
+  forma_alegada: string;
+  observacao: string | null;
+  comprovante_path: string | null;
+  solicitado_em: string;
+};
+
 const FORMA_LABEL: Record<string, string> = {
   dinheiro: "dinheiro",
+  pix: "Pix",
   confirmacao_vendedor: "confirmação",
   ambos: "ambos",
+  transferencia: "transferência",
 };
 
 const initialState: BaixaFormState = {};
 
-export function LoteCard({ lote, baixas }: { lote: Lote; baixas: Baixa[] }) {
+function SolicitacoesPendentes({ solicitacoes }: { solicitacoes: Solicitacao[] }) {
+  const [isPending, startTransition] = useTransition();
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  if (solicitacoes.length === 0) return null;
+
+  return (
+    <div className="border-t border-border bg-dourado/10 px-5 py-4">
+      <p className="mb-3 text-[12px] font-bold uppercase tracking-wide text-dourado-deep">
+        {solicitacoes.length} solicitação(ões) pendente(s) do vendedor
+      </p>
+      <div className="flex flex-col gap-2.5">
+        {solicitacoes.map((s) => (
+          <div
+            key={s.id}
+            className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-card px-3.5 py-2.5"
+          >
+            <div>
+              <div className="text-[13.5px] font-bold tabular-nums">
+                {s.numero_inicial === s.numero_final
+                  ? s.numero_inicial
+                  : `${s.numero_inicial} – ${s.numero_final}`}
+              </div>
+              <div className="text-[11.5px] text-muted-foreground">
+                {FORMA_LABEL[s.forma_alegada]} · {formatDate(s.solicitado_em)}
+                {s.observacao ? ` · "${s.observacao}"` : ""}
+              </div>
+            </div>
+            <div className="flex items-center gap-2.5">
+              {s.comprovante_path ? (
+                <span className="text-[11.5px] font-bold text-vinho-deep">📎 comprovante anexado</span>
+              ) : null}
+              <Button
+                type="button"
+                disabled={isPending && busyId === s.id}
+                onClick={() => {
+                  setBusyId(s.id);
+                  startTransition(async () => {
+                    try {
+                      await aprovarSolicitacao(s.id);
+                      toast.success("Solicitação aprovada — baixa confirmada.");
+                    } catch (err) {
+                      toast.error(err instanceof Error ? err.message : "Não foi possível aprovar.");
+                    }
+                  });
+                }}
+                className="h-8 bg-good-bg px-3 text-[12.5px] font-bold text-good hover:bg-good-bg"
+              >
+                ✓ Aprovar
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isPending && busyId === s.id}
+                onClick={() => {
+                  const motivo = window.prompt("Motivo da rejeição (o vendedor vai ver isso):");
+                  if (!motivo || !motivo.trim()) return;
+                  setBusyId(s.id);
+                  startTransition(async () => {
+                    try {
+                      await rejeitarSolicitacao(s.id, motivo.trim());
+                      toast.success("Solicitação rejeitada.");
+                    } catch (err) {
+                      toast.error(err instanceof Error ? err.message : "Não foi possível rejeitar.");
+                    }
+                  });
+                }}
+                className="h-8 border-bad/30 bg-bad-bg px-3 text-[12.5px] font-bold text-bad hover:bg-bad-bg"
+              >
+                ✕ Rejeitar
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function LoteCard({
+  lote,
+  baixas,
+  solicitacoes = [],
+}: {
+  lote: Lote;
+  baixas: Baixa[];
+  solicitacoes?: Solicitacao[];
+}) {
   const confirmado = baixas.reduce((s, b) => s + b.quantidade, 0);
   const gaps = useMemo(
     () =>
@@ -98,6 +203,8 @@ export function LoteCard({ lote, baixas }: { lote: Lote; baixas: Baixa[] }) {
       <div className="mx-5 mb-3.5 flex h-2 overflow-hidden rounded-full bg-secondary">
         <span className="block h-full bg-dourado" style={{ width: `${pct}%` }} />
       </div>
+
+      <SolicitacoesPendentes solicitacoes={solicitacoes} />
 
       {baixas.length > 0 ? (
         <div className="flex flex-wrap gap-2 px-5 pb-3.5">
@@ -176,9 +283,10 @@ export function LoteCard({ lote, baixas }: { lote: Lote; baixas: Baixa[] }) {
               </Label>
               <select
                 name="forma_confirmacao"
-                defaultValue="dinheiro"
+                defaultValue="pix"
                 className="h-9 rounded-md border border-border bg-card px-2.5 text-sm font-semibold"
               >
+                <option value="pix">Pix</option>
                 <option value="dinheiro">Dinheiro</option>
                 <option value="confirmacao_vendedor">Confirmação</option>
                 <option value="ambos">Ambos</option>
