@@ -4,6 +4,7 @@ import { getSorteioAtual } from "@/lib/sorteio-atual";
 import { formatInt } from "@/lib/format";
 import { computeGaps } from "@/lib/gaps";
 import { PrintButton } from "./print-button";
+import { ReportTabs } from "./report-tabs";
 
 export default async function RelatorioPage() {
   const supabase = await createClient();
@@ -55,6 +56,8 @@ export default async function RelatorioPage() {
         </span>
         <PrintButton />
       </div>
+
+      <ReportTabs active="vendedores" />
 
       <div className="relative overflow-hidden border border-[#e4d9c8] bg-[#fffdf8] text-[#241012] shadow-2xl print:border-none print:shadow-none mx-auto max-w-[820px]">
         <Image
