@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { TrophyIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { formatInt, formatBRL } from "@/lib/format";
 import { RealtimeRefresher } from "@/components/placar/realtime-refresher";
@@ -12,23 +13,26 @@ type Sorteio = {
 export async function Dashboard({ sorteio }: { sorteio: Sorteio }) {
   const supabase = await createClient();
 
-  const [{ data: resumoRows }, { data: ranking }, { data: diario }] = await Promise.all([
-    supabase.from("vw_resumo_sorteio").select("*").eq("sorteio_id", sorteio.id).limit(1),
-    supabase
-      .from("vw_ranking_vendedores")
-      .select("vendedor_id, nome, total_vendido")
-      .eq("sorteio_id", sorteio.id)
-      .order("posicao", { ascending: true })
-      .limit(5),
-    supabase
-      .from("vw_arrecadacao_diaria")
-      .select("*")
-      .eq("sorteio_id", sorteio.id)
-      .order("dia", { ascending: false })
-      .limit(12),
-  ]);
+  const [{ data: resumoRows }, { data: ranking }, { data: diario }, { data: resultadoRows }] =
+    await Promise.all([
+      supabase.from("vw_resumo_sorteio").select("*").eq("sorteio_id", sorteio.id).limit(1),
+      supabase
+        .from("vw_ranking_vendedores")
+        .select("vendedor_id, nome, total_vendido")
+        .eq("sorteio_id", sorteio.id)
+        .order("posicao", { ascending: true })
+        .limit(5),
+      supabase
+        .from("vw_arrecadacao_diaria")
+        .select("*")
+        .eq("sorteio_id", sorteio.id)
+        .order("dia", { ascending: false })
+        .limit(12),
+      supabase.from("vw_resultado_publico").select("*").eq("sorteio_id", sorteio.id).maybeSingle(),
+    ]);
 
   const resumo = resumoRows?.[0];
+  const resultado = resultadoRows;
   const diarioAsc = (diario ?? []).slice().reverse();
 
   const totalDisponiveis = resumo
@@ -85,6 +89,36 @@ export async function Dashboard({ sorteio }: { sorteio: Sorteio }) {
             Atualiza automaticamente
           </span>
         </div>
+
+        {resultado ? (
+          <div className="mb-4 rounded-[20px] bg-gradient-to-br from-vinho to-vinho-deep p-6 text-bege shadow-sm">
+            <div className="flex items-center gap-1.5 text-[11.5px] font-extrabold uppercase tracking-wide text-bege/70">
+              <TrophyIcon className="size-4" /> Resultado do sorteio
+            </div>
+            <div className="mt-2 text-[15px] font-semibold">
+              Cartela premiada · nº{" "}
+              <b className="text-[22px] font-black text-dourado">{resultado.numero_sorteado}</b>
+            </div>
+            <div className="mt-3.5 grid grid-cols-1 gap-4 border-t border-bege/15 pt-3.5 sm:grid-cols-2">
+              <div>
+                <div className="text-[10.5px] font-bold uppercase tracking-wide text-bege/60">
+                  Comprador(a)
+                </div>
+                <div className="mt-0.5 text-[16px] font-black">
+                  {resultado.nome_comprador ?? "Não informado"}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10.5px] font-bold uppercase tracking-wide text-bege/60">
+                  Vendido por
+                </div>
+                <div className="mt-0.5 text-[16px] font-black">
+                  {resultado.vendedor_premiado_nome ?? "—"}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         <div className="mb-3.5 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
           <div className="rounded-[20px] border border-border bg-card p-6 shadow-sm">

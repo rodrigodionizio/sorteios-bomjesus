@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { PaperclipIcon, CheckIcon, XIcon } from "lucide-react";
+import { PaperclipIcon, CheckIcon, XIcon, UserIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -16,9 +16,11 @@ import {
   rejeitarSolicitacao,
   type BaixaFormState,
 } from "./actions";
+import { EditCompradorDialog } from "./edit-comprador-dialog";
 
 type Lote = {
   id: string;
+  sorteio_id: string;
   numero_inicial: number;
   numero_final: number;
   quantidade: number;
@@ -32,6 +34,12 @@ type Baixa = {
   quantidade: number;
   forma_confirmacao: string;
   created_at: string;
+};
+
+type Comprador = {
+  numero_cartela: number;
+  nome_comprador: string;
+  contato_comprador?: string | null;
 };
 
 type Solicitacao = {
@@ -139,10 +147,12 @@ export function LoteCard({
   lote,
   baixas,
   solicitacoes = [],
+  compradores = [],
 }: {
   lote: Lote;
   baixas: Baixa[];
   solicitacoes?: Solicitacao[];
+  compradores?: Comprador[];
 }) {
   const confirmado = baixas.reduce((s, b) => s + b.quantidade, 0);
   const gaps = useMemo(
@@ -211,17 +221,30 @@ export function LoteCard({
 
       {baixas.length > 0 ? (
         <div className="flex flex-wrap gap-2 px-5 pb-3.5">
-          {baixas.map((b) => (
-            <span
-              key={b.id}
-              className="rounded-full bg-good-bg px-2.5 py-1 text-xs font-bold text-good"
-            >
-              {b.numero_inicial === b.numero_final
-                ? b.numero_inicial
-                : `${b.numero_inicial}–${b.numero_final}`}{" "}
-              · {FORMA_LABEL[b.forma_confirmacao]} · {formatDate(b.created_at)}
-            </span>
-          ))}
+          {baixas.map((b) => {
+            const comprador = compradores.find(
+              (c) => c.numero_cartela >= b.numero_inicial && c.numero_cartela <= b.numero_final,
+            );
+            return (
+              <span
+                key={b.id}
+                className="rounded-full bg-good-bg px-2.5 py-1 text-xs font-bold text-good"
+              >
+                {b.numero_inicial === b.numero_final
+                  ? b.numero_inicial
+                  : `${b.numero_inicial}–${b.numero_final}`}{" "}
+                · {FORMA_LABEL[b.forma_confirmacao]} · {formatDate(b.created_at)} ·{" "}
+                <EditCompradorDialog
+                  sorteioId={lote.sorteio_id}
+                  loteId={lote.id}
+                  numeroInicial={b.numero_inicial}
+                  numeroFinal={b.numero_final}
+                  nomeAtual={comprador?.nome_comprador}
+                  contatoAtual={comprador?.contato_comprador ?? undefined}
+                />
+              </span>
+            );
+          })}
         </div>
       ) : null}
 
@@ -302,6 +325,32 @@ export function LoteCard({
             >
               {pending ? "Confirmando..." : "Confirmar baixa"}
             </Button>
+
+            <div className="col-span-full grid grid-cols-1 gap-3 border-t border-border pt-3.5 sm:grid-cols-2">
+              <div className="col-span-full flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                <UserIcon className="size-3.5" /> Comprador (opcional · visível só na área administrativa)
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                  Nome do comprador
+                </Label>
+                <Input
+                  name="comprador_nome"
+                  placeholder="Ex.: Iolanda Ferreira"
+                  key={`comprador-nome-${state.success}`}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                  Contato
+                </Label>
+                <Input
+                  name="comprador_contato"
+                  placeholder="Ex.: (33) 99876-5432"
+                  key={`comprador-contato-${state.success}`}
+                />
+              </div>
+            </div>
 
             {state.error ? (
               <p className="col-span-full flex items-start gap-2 rounded-md bg-bad-bg px-3 py-2 text-[12.5px] font-semibold text-bad">

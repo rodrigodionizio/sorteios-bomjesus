@@ -53,6 +53,14 @@ export default async function BaixaPage({
           .order("solicitado_em")
       : { data: [] };
 
+  const { data: compradores } =
+    loteIds.length > 0
+      ? await supabase
+          .from("compradores_cartela")
+          .select("numero_cartela, nome_comprador, contato_comprador, lote_id")
+          .in("lote_id", loteIds)
+      : { data: [] };
+
   const totalReservado = (lotes ?? []).reduce((s, l) => s + l.quantidade, 0);
   const totalConfirmado = (baixas ?? []).reduce((s, b) => s + b.quantidade, 0);
 
@@ -92,6 +100,7 @@ export default async function BaixaPage({
                 lote={lote}
                 baixas={(baixas ?? []).filter((b) => b.lote_id === lote.id)}
                 solicitacoes={(solicitacoes ?? []).filter((s) => s.lote_id === lote.id)}
+                compradores={(compradores ?? []).filter((c) => c.lote_id === lote.id)}
               />
             ))}
             {(lotes ?? []).length === 0 ? (

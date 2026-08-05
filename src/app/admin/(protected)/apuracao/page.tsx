@@ -1,4 +1,4 @@
-import { InfoIcon, CheckIcon, TriangleAlertIcon, TrophyIcon } from "lucide-react";
+import { InfoIcon, CheckIcon, TriangleAlertIcon, TrophyIcon, LockIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getSorteioAtual } from "@/lib/sorteio-atual";
 import { formatDateTime } from "@/lib/format";
@@ -30,6 +30,16 @@ export default async function ApuracaoPage() {
   const vendedorCartela = vendedores?.find((v) => v.id === resultado?.vendedor_id);
   const maiorVendedor = vendedores?.find((v) => v.id === resultado?.maior_vendedor_id);
 
+  const { data: comprador } =
+    resultado && atual
+      ? await supabase
+          .from("compradores_cartela")
+          .select("nome_comprador, contato_comprador")
+          .eq("sorteio_id", atual.id)
+          .eq("numero_cartela", resultado.numero_sorteado)
+          .maybeSingle()
+      : { data: null };
+
   return (
     <>
       <AdminPageHeader
@@ -57,7 +67,10 @@ export default async function ApuracaoPage() {
                 <strong className="text-foreground">
                   quem reservou aquele intervalo
                 </strong>{" "}
-                — só que com um aviso de que a venda não foi confirmada.
+                — só que com um aviso de que a venda não foi confirmada. Nome
+                e contato do comprador (quando registrados na baixa) só
+                aparecem aqui — no painel da diretoria e no placar público,
+                só o nome é exibido.
               </span>
             </div>
           </section>
@@ -95,6 +108,19 @@ export default async function ApuracaoPage() {
                     Nenhum vendedor reservou esse número neste sorteio.
                   </p>
                 )}
+                {comprador ? (
+                  <div className="mt-3 rounded-lg bg-white/40 px-3.5 py-3">
+                    <div className="mb-1 flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wide text-[#3a1400]/60">
+                      <LockIcon className="size-3" /> Comprador · dado sensível
+                    </div>
+                    <div className="text-[14.5px] font-black">{comprador.nome_comprador}</div>
+                    {comprador.contato_comprador ? (
+                      <div className="text-[12px] font-semibold text-[#3a1400]/70">
+                        {comprador.contato_comprador}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
 
               <div className="rounded-2xl bg-gradient-to-br from-dourado to-[#f2a23f] p-6 text-[#3a1400]">

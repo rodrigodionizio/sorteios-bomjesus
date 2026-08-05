@@ -20,6 +20,8 @@ export async function createBaixa(
     numero_inicial: formData.get("numero_inicial"),
     numero_final: formData.get("numero_final"),
     forma_confirmacao: formData.get("forma_confirmacao"),
+    comprador_nome: formData.get("comprador_nome") || undefined,
+    comprador_contato: formData.get("comprador_contato") || undefined,
   });
 
   if (!parsed.success) {
@@ -30,13 +32,19 @@ export async function createBaixa(
     return { error: "Confira os campos destacados.", fieldErrors };
   }
 
-  const { lote_id, numero_inicial, numero_final, forma_confirmacao } =
-    parsed.data;
+  const {
+    lote_id,
+    numero_inicial,
+    numero_final,
+    forma_confirmacao,
+    comprador_nome,
+    comprador_contato,
+  } = parsed.data;
   const supabase = await createClient();
 
   const { data: lote } = await supabase
     .from("lotes_cartelas")
-    .select("numero_inicial, numero_final")
+    .select("sorteio_id, numero_inicial, numero_final")
     .eq("id", lote_id)
     .single();
 
@@ -73,6 +81,22 @@ export async function createBaixa(
 
   if (error) {
     return { error: `Não foi possível confirmar a baixa: ${error.message}` };
+  }
+
+  if (comprador_nome) {
+    const compradores = [];
+    for (let n = numero_inicial; n <= numero_final; n++) {
+      compradores.push({
+        sorteio_id: lote.sorteio_id,
+        numero_cartela: n,
+        nome_comprador: comprador_nome,
+        contato_comprador: comprador_contato || null,
+        lote_id,
+      });
+    }
+    await supabase.from("compradores_cartela").upsert(compradores, {
+      onConflict: "sorteio_id,numero_cartela",
+    });
   }
 
   revalidatePath("/admin/baixa");
@@ -116,6 +140,61 @@ export async function baixarRestante(loteId: string) {
 
   revalidatePath("/admin/baixa");
   revalidatePath("/admin");
+}
+
+export type CompradorFormState = {
+  error?: string;
+  success?: boolean;
+};
+
+export async function salvarComprador(
+  sorteioId: string,
+  loteId: string,
+  numeroInicial: number,
+  numeroFinal: number,
+  _prevState: CompradorFormState,
+  formData: FormData,
+): Promise<CompradorFormState> {
+  const nome = String(formData.get("comprador_nome") ?? "").trim();
+  const contato = String(formData.get("comprador_contato") ?? "").trim();
+  const supabase = await createClient();
+
+  const numeros = Array.from(
+    { length: numeroFinal - numeroInicial + 1 },
+    (_, i) => numeroInicial + i,
+  );
+
+  if (!nome) {
+    const { error } = await supabase
+      .from("compradores_cartela")
+      .delete()
+      .eq("sorteio_id", sorteioId)
+      .in("numero_cartela", numeros);
+
+    if (error) {
+      return { error: `Não foi possível remover o comprador: ${error.message}` };
+    }
+    revalidatePath("/admin/baixa");
+    return { success: true };
+  }
+
+  const { error } = await supabase.from("compradores_cartela").upsert(
+    numeros.map((numero_cartela) => ({
+      sorteio_id: sorteioId,
+      numero_cartela,
+      nome_comprador: nome,
+      contato_comprador: contato || null,
+      lote_id: loteId,
+    })),
+    { onConflict: "sorteio_id,numero_cartela" },
+  );
+
+  if (error) {
+    return { error: `Não foi possível salvar: ${error.message}` };
+  }
+
+  revalidatePath("/admin/baixa");
+  return { success: true };
 }
 
 export async function aprovarSolicitacao(solicitacaoId: string) {

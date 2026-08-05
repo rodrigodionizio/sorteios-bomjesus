@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { TrophyIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { formatInt } from "@/lib/format";
 import { RealtimeRefresher } from "@/components/placar/realtime-refresher";
@@ -48,7 +49,7 @@ export default async function PlacarPage() {
     );
   }
 
-  const [{ data: ranking }, { data: resumoRows }] = await Promise.all([
+  const [{ data: ranking }, { data: resumoRows }, { data: resultado }] = await Promise.all([
     supabase
       .from("vw_ranking_vendedores")
       .select("sorteio_id, vendedor_id, nome, total_vendido, total_reservado, ultima_baixa, posicao")
@@ -59,6 +60,7 @@ export default async function PlacarPage() {
       .select("*")
       .eq("sorteio_id", sorteio.id)
       .limit(1),
+    supabase.from("vw_resultado_publico").select("*").eq("sorteio_id", sorteio.id).maybeSingle(),
   ]);
 
   const resumo = resumoRows?.[0];
@@ -105,7 +107,9 @@ export default async function PlacarPage() {
       <h2 className="sr-only">
         Placar ao vivo com o ranking de todos os vendedores de cartelas do
         sorteio, atualizado em tempo real. O 1º lugar é destacado; os demais
-        aparecem em lista simples para acompanhamento.
+        aparecem em lista simples para acompanhamento. Quando o sorteio já
+        foi apurado, o número da cartela premiada e quem a comprou também
+        aparecem aqui.
       </h2>
 
       <div className="mx-auto max-w-4xl lg:max-w-6xl">
@@ -147,6 +151,35 @@ export default async function PlacarPage() {
             conta e aparece aqui.
           </p>
         </div>
+
+        {resultado ? (
+          <div className="mb-8 rounded-2xl bg-gradient-to-br from-dourado to-[#f2a23f] p-6 text-[#3a1400] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.55)] sm:p-7">
+            <div className="flex items-center gap-1.5 text-[11.5px] font-extrabold uppercase tracking-wide text-[#3a1400]/65">
+              <TrophyIcon className="size-4" /> Resultado do sorteio
+            </div>
+            <h2 className="mt-1.5 text-[24px] font-black leading-tight sm:text-[28px]">
+              A cartela premiada foi a nº {resultado.numero_sorteado}
+            </h2>
+            <div className="mt-3.5 grid grid-cols-1 gap-4 border-t border-[#3a1400]/20 pt-3.5 sm:grid-cols-2">
+              <div>
+                <div className="text-[10.5px] font-bold uppercase tracking-wide text-[#3a1400]/60">
+                  Comprador(a) da cartela
+                </div>
+                <div className="mt-0.5 text-[18px] font-black">
+                  {resultado.nome_comprador ?? "Não informado"}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10.5px] font-bold uppercase tracking-wide text-[#3a1400]/60">
+                  Vendida por
+                </div>
+                <div className="mt-0.5 text-[18px] font-black">
+                  {resultado.vendedor_premiado_nome ?? "—"}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {resumo ? (
           <div className="mb-8 overflow-hidden rounded-2xl border border-bege/15">

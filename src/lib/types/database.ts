@@ -302,6 +302,32 @@ export interface Database {
         >;
         Relationships: [];
       };
+      compradores_cartela: {
+        Row: {
+          id: string;
+          sorteio_id: string;
+          numero_cartela: number;
+          nome_comprador: string;
+          contato_comprador: string | null;
+          lote_id: string | null;
+          registrado_por: string | null;
+          criado_em: string;
+        };
+        Insert: {
+          id?: string;
+          sorteio_id: string;
+          numero_cartela: number;
+          nome_comprador: string;
+          contato_comprador?: string | null;
+          lote_id?: string | null;
+          registrado_por?: string | null;
+          criado_em?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["compradores_cartela"]["Insert"]
+        >;
+        Relationships: [];
+      };
     };
     Views: {
       vw_ranking_vendedores: {
@@ -369,6 +395,17 @@ export interface Database {
           dia: string;
           cartelas_dia: number;
           valor_dia: number;
+        };
+        Relationships: [];
+      };
+      vw_resultado_publico: {
+        Row: {
+          sorteio_id: string;
+          numero_sorteado: number;
+          cartela_confirmada: boolean;
+          vendedor_premiado_nome: string | null;
+          nome_comprador: string | null;
+          maior_vendedor_nome: string | null;
         };
         Relationships: [];
       };
