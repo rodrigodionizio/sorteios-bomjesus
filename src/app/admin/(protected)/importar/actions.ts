@@ -204,24 +204,41 @@ export async function importarLinhas(
   aba: "reservas" | "baixas",
   reservas: ReservaRow[],
   baixas: BaixaRow[],
+  arquivoOrigem: string,
 ): Promise<{ importadas: number; erro?: string }> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (aba === "reservas") {
     const validas = reservas.filter((r) => r.status === "ok");
     if (validas.length === 0) return { importadas: 0 };
 
-    const { error } = await supabase.from("lotes_cartelas").insert(
-      validas.map((r) => ({
-        sorteio_id: r.sorteio_id!,
-        vendedor_id: r.vendedor_id!,
-        numero_inicial: r.numero_inicial,
-        numero_final: r.numero_final,
-        tipo: r.tipo,
-        origem: "planilha" as const,
-      })),
-    );
+    const { data: lotesInseridos, error } = await supabase
+      .from("lotes_cartelas")
+      .insert(
+        validas.map((r) => ({
+          sorteio_id: r.sorteio_id!,
+          vendedor_id: r.vendedor_id!,
+          numero_inicial: r.numero_inicial,
+          numero_final: r.numero_final,
+          tipo: r.tipo,
+          origem: "planilha" as const,
+        })),
+      )
+      .select("id");
     if (error) return { importadas: 0, erro: error.message };
+
+    if (lotesInseridos && lotesInseridos.length > 0) {
+      await supabase.from("log_importacao").insert(
+        lotesInseridos.map((l) => ({
+          lote_id: l.id,
+          arquivo_origem: arquivoOrigem,
+          importado_por: user?.id ?? null,
+        })),
+      );
+    }
 
     revalidatePath("/admin/reservar");
     revalidatePath("/admin");
@@ -231,15 +248,28 @@ export async function importarLinhas(
   const validas = baixas.filter((b) => b.status === "ok");
   if (validas.length === 0) return { importadas: 0 };
 
-  const { error } = await supabase.from("baixas_cartelas").insert(
-    validas.map((b) => ({
-      lote_id: b.lote_id!,
-      numero_inicial: b.numero_inicial,
-      numero_final: b.numero_final,
-      forma_confirmacao: b.forma_confirmacao,
-    })),
-  );
+  const { data: baixasInseridas, error } = await supabase
+    .from("baixas_cartelas")
+    .insert(
+      validas.map((b) => ({
+        lote_id: b.lote_id!,
+        numero_inicial: b.numero_inicial,
+        numero_final: b.numero_final,
+        forma_confirmacao: b.forma_confirmacao,
+      })),
+    )
+    .select("id");
   if (error) return { importadas: 0, erro: error.message };
+
+  if (baixasInseridas && baixasInseridas.length > 0) {
+    await supabase.from("log_importacao").insert(
+      baixasInseridas.map((b) => ({
+        baixa_id: b.id,
+        arquivo_origem: arquivoOrigem,
+        importado_por: user?.id ?? null,
+      })),
+    );
+  }
 
   revalidatePath("/admin/baixa");
   revalidatePath("/admin");

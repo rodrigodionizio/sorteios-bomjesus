@@ -29,7 +29,7 @@ export function ImportarForm() {
   function handleImport() {
     if (!report) return;
     startImporting(async () => {
-      const result = await importarLinhas(aba, report.reservas, report.baixas);
+      const result = await importarLinhas(aba, report.reservas, report.baixas, report.arquivo);
       if (result.erro) {
         toast.error(`Falha ao importar: ${result.erro}`);
         return;

@@ -58,7 +58,7 @@ export default async function ApuracaoPage() {
               Digite o número da cartela sorteada no dia do evento. O sistema
               resolve os dois prêmios automaticamente.
             </p>
-            <ApuracaoForm sorteioId={atual.id} />
+            <ApuracaoForm sorteioId={atual.id} numeroAtual={resultado?.numero_sorteado} />
             <div className="mt-4 flex items-start gap-2 rounded-lg bg-info-bg px-4 py-3 text-[13px] font-medium text-info">
               <InfoIcon className="mt-0.5 size-4 shrink-0" />
               <span>
@@ -70,7 +70,9 @@ export default async function ApuracaoPage() {
                 — só que com um aviso de que a venda não foi confirmada. Nome
                 e contato do comprador (quando registrados na baixa) só
                 aparecem aqui — no painel da diretoria e no placar público,
-                só o nome é exibido.
+                só o nome é exibido. Digitar um número novo depois de já ter
+                apurado corrige o resultado — o anterior fica registrado no
+                histórico de auditoria.
               </span>
             </div>
           </section>

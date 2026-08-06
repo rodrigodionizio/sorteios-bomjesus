@@ -7,7 +7,12 @@ import { RealtimeRefresher } from "@/components/placar/realtime-refresher";
 
 export const dynamic = "force-dynamic";
 
-export default async function PlacarPage() {
+export default async function PlacarPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sorteio?: string }>;
+}) {
+  const { sorteio: sorteioIdParam } = await searchParams;
   const supabase = await createClient();
 
   const { data: sorteios } = await supabase
@@ -15,8 +20,12 @@ export default async function PlacarPage() {
     .select("*")
     .order("created_at", { ascending: false });
 
+  const emAndamento = (sorteios ?? []).filter((s) => s.status === "em_andamento");
+
   const sorteio =
-    sorteios?.find((s) => s.status === "em_andamento") ?? sorteios?.[0];
+    (sorteioIdParam ? sorteios?.find((s) => s.id === sorteioIdParam) : undefined) ??
+    emAndamento[0] ??
+    sorteios?.[0];
 
   if (!sorteio) {
     return (
@@ -132,6 +141,27 @@ export default async function PlacarPage() {
             </span>
           </div>
         </div>
+
+        {emAndamento.length > 1 ? (
+          <div className="mb-7 flex flex-wrap items-center gap-2 text-[12.5px]">
+            <span className="font-bold text-bege/60">
+              Mais de um sorteio em andamento agora:
+            </span>
+            {emAndamento.map((s) => (
+              <Link
+                key={s.id}
+                href={s.id === sorteio?.id ? "/" : `/?sorteio=${s.id}`}
+                className={
+                  s.id === sorteio?.id
+                    ? "rounded-full bg-dourado px-3 py-1 font-black text-[#3a1400]"
+                    : "rounded-full border border-bege/25 px-3 py-1 font-bold text-bege/75 hover:border-bege/45"
+                }
+              >
+                {s.nome}
+              </Link>
+            ))}
+          </div>
+        ) : null}
 
         <div className="mb-9">
           <p className="mb-0.5 font-humming text-[26px] text-dourado">
