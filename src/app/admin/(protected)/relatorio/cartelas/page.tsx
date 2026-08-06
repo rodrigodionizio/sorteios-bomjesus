@@ -8,6 +8,20 @@ import { ReportTabs } from "../report-tabs";
 
 type FaixaComVendedor = Range & { vendedorNome: string };
 
+/** Agrupa por vendedor (ordem alfabética), preservando a ordem por número já feita antes de chamar. */
+function agruparPorVendedor<T extends { vendedorNome: string }>(itens: T[]): [string, T[]][] {
+  const grupos = new Map<string, T[]>();
+  for (const item of itens) {
+    const grupo = grupos.get(item.vendedorNome);
+    if (grupo) {
+      grupo.push(item);
+    } else {
+      grupos.set(item.vendedorNome, [item]);
+    }
+  }
+  return Array.from(grupos.entries()).sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
+}
+
 export default async function RelatorioCartelasPage() {
   const supabase = await createClient();
   const {
@@ -76,6 +90,9 @@ export default async function RelatorioCartelasPage() {
   }
   reservadas.sort((a, b) => a.inicio - b.inicio);
   const totalReservadas = reservadas.reduce((s, f) => s + (f.fim - f.inicio + 1), 0);
+
+  const baixadasPorVendedor = agruparPorVendedor(baixadas);
+  const reservadasPorVendedor = agruparPorVendedor(reservadas);
 
   // 3. Cartelas disponíveis — o que sobra no sorteio inteiro depois de
   // descontar todos os lotes, de qualquer vendedor.
@@ -160,52 +177,58 @@ export default async function RelatorioCartelasPage() {
             Cartelas baixadas
           </h2>
           <span className="ml-2 text-[11px] font-bold text-[#9c8788]">
-            — {formatInt(totalBaixadas)} cartela(s), {baixadas.length} lançamento(s)
+            — {formatInt(totalBaixadas)} cartela(s), {baixadasPorVendedor.length} vendedor(es)
           </span>
           <p className="mb-4.5 mt-1.5 max-w-[62ch] text-xs text-[#6d5658]">
-            Todas as baixas confirmadas neste sorteio, em ordem de número — sem
-            agrupar por vendedor. Use para conferir fisicamente o que já foi
-            recebido.
+            Agrupado por vendedor (ordem alfabética), cada grupo já ordenado por
+            número. Use para conferir fisicamente o que já foi recebido.
           </p>
-          <table className="mb-6 w-full border-collapse text-xs">
-            <thead>
-              <tr className="text-left text-[9.5px] font-bold uppercase tracking-wide text-[#9c8788]">
-                <th className="px-2 py-1.5">Intervalo</th>
-                <th className="px-2 py-1.5">Qtd.</th>
-                <th className="px-2 py-1.5">Vendedor</th>
-                <th className="px-2 py-1.5">Forma</th>
-                <th className="px-2 py-1.5">Data</th>
-              </tr>
-            </thead>
-            <tbody>
-              {baixadas.map((b) => (
-                <tr key={b.id} className="border-b border-[#e4d9c8]">
-                  <td className="px-2 py-1.5 font-bold tabular-nums">
-                    {b.numero_inicial === b.numero_final
-                      ? b.numero_inicial
-                      : `${b.numero_inicial} – ${b.numero_final}`}
-                  </td>
-                  <td className="px-2 py-1.5 tabular-nums">{formatInt(b.quantidade)}</td>
-                  <td className="px-2 py-1.5">{b.vendedorNome}</td>
-                  <td className="px-2 py-1.5">
-                    <span className="inline-block rounded bg-good-bg px-1.5 py-0.5 text-[10.5px] font-bold capitalize text-good">
-                      {b.forma_confirmacao}
-                    </span>
-                  </td>
-                  <td className="px-2 py-1.5 text-[10.5px] text-[#9c8788]">
-                    {formatDate(b.created_at)}
-                  </td>
-                </tr>
-              ))}
-              {baixadas.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-2 py-4 text-center text-[#9c8788]">
-                    Nenhuma baixa confirmada ainda.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+          {baixadasPorVendedor.map(([vendedorNome, itens]) => {
+            const subtotal = itens.reduce((s, b) => s + b.quantidade, 0);
+            return (
+              <div key={vendedorNome} className="mb-4 break-inside-avoid">
+                <div className="mb-1 flex items-baseline justify-between border-b border-foreground pb-1">
+                  <span className="text-[13.5px] font-black">{vendedorNome}</span>
+                  <span className="text-[11px] font-bold text-[#9c8788]">
+                    {formatInt(subtotal)} cartela(s) confirmada(s)
+                  </span>
+                </div>
+                <table className="w-full border-collapse text-xs">
+                  <thead>
+                    <tr className="text-left text-[9.5px] font-bold uppercase tracking-wide text-[#9c8788]">
+                      <th className="px-2 py-1.5">Intervalo</th>
+                      <th className="px-2 py-1.5">Qtd.</th>
+                      <th className="px-2 py-1.5">Forma</th>
+                      <th className="px-2 py-1.5">Data</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {itens.map((b) => (
+                      <tr key={b.id} className="border-b border-[#e4d9c8]">
+                        <td className="px-2 py-1.5 font-bold tabular-nums">
+                          {b.numero_inicial === b.numero_final
+                            ? b.numero_inicial
+                            : `${b.numero_inicial} – ${b.numero_final}`}
+                        </td>
+                        <td className="px-2 py-1.5 tabular-nums">{formatInt(b.quantidade)}</td>
+                        <td className="px-2 py-1.5">
+                          <span className="inline-block rounded bg-good-bg px-1.5 py-0.5 text-[10.5px] font-bold capitalize text-good">
+                            {b.forma_confirmacao}
+                          </span>
+                        </td>
+                        <td className="px-2 py-1.5 text-[10.5px] text-[#9c8788]">
+                          {formatDate(b.created_at)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })}
+          {baixadasPorVendedor.length === 0 ? (
+            <p className="mb-6 text-center text-[#9c8788]">Nenhuma baixa confirmada ainda.</p>
+          ) : null}
 
           <h2 className="mb-1 inline-block border-b-2 border-dourado pb-0.5 text-[15px] font-black">
             Cartelas reservadas
@@ -214,36 +237,43 @@ export default async function RelatorioCartelasPage() {
             — {formatInt(totalReservadas)} cartela(s), aguardando baixa
           </span>
           <p className="mb-4.5 mt-1.5 max-w-[62ch] text-xs text-[#6d5658]">
-            Números que já estão com algum vendedor, mas ainda não foram
-            confirmados — o que falta cobrar/receber.
+            Também agrupado por vendedor — o que falta cobrar/receber de cada
+            um.
           </p>
-          <table className="mb-6 w-full border-collapse text-xs">
-            <thead>
-              <tr className="text-left text-[9.5px] font-bold uppercase tracking-wide text-[#9c8788]">
-                <th className="px-2 py-1.5">Intervalo</th>
-                <th className="px-2 py-1.5">Qtd.</th>
-                <th className="px-2 py-1.5">Vendedor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reservadas.map((f, i) => (
-                <tr key={i} className="border-b border-[#e4d9c8]">
-                  <td className="px-2 py-1.5 font-bold tabular-nums">
-                    {f.inicio === f.fim ? f.inicio : `${f.inicio} – ${f.fim}`}
-                  </td>
-                  <td className="px-2 py-1.5 tabular-nums">{formatInt(f.fim - f.inicio + 1)}</td>
-                  <td className="px-2 py-1.5">{f.vendedorNome}</td>
-                </tr>
-              ))}
-              {reservadas.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="px-2 py-4 text-center text-[#9c8788]">
-                    Nenhuma cartela reservada aguardando baixa.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+          {reservadasPorVendedor.map(([vendedorNome, itens]) => {
+            const subtotal = itens.reduce((s, f) => s + (f.fim - f.inicio + 1), 0);
+            return (
+              <div key={vendedorNome} className="mb-4 break-inside-avoid">
+                <div className="mb-1 flex items-baseline justify-between border-b border-foreground pb-1">
+                  <span className="text-[13.5px] font-black">{vendedorNome}</span>
+                  <span className="text-[11px] font-bold text-[#9c8788]">
+                    {formatInt(subtotal)} cartela(s) pendente(s)
+                  </span>
+                </div>
+                <table className="w-full border-collapse text-xs">
+                  <thead>
+                    <tr className="text-left text-[9.5px] font-bold uppercase tracking-wide text-[#9c8788]">
+                      <th className="px-2 py-1.5">Intervalo</th>
+                      <th className="px-2 py-1.5">Qtd.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {itens.map((f, i) => (
+                      <tr key={i} className="border-b border-[#e4d9c8]">
+                        <td className="px-2 py-1.5 font-bold tabular-nums">
+                          {f.inicio === f.fim ? f.inicio : `${f.inicio} – ${f.fim}`}
+                        </td>
+                        <td className="px-2 py-1.5 tabular-nums">{formatInt(f.fim - f.inicio + 1)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })}
+          {reservadasPorVendedor.length === 0 ? (
+            <p className="mb-6 text-center text-[#9c8788]">Nenhuma cartela reservada aguardando baixa.</p>
+          ) : null}
 
           <h2 className="mb-1 inline-block border-b-2 border-dourado pb-0.5 text-[15px] font-black">
             Cartelas disponíveis
