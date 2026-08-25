@@ -3,25 +3,39 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { gerarNumerosCartela, assinaturaCartela } from "@/lib/bingo";
+import { findLoteSobreposto } from "@/lib/overlap";
 
 export type GerarCartelasState = {
   error?: string;
   geradas?: number;
+  puladas?: number;
 };
 
-/** PostgREST não gosta de payloads gigantes: 1.500 cartelas vão em fatias. */
+/** PostgREST não gosta de payloads gigantes: milhares de cartelas vão em fatias. */
 const TAMANHO_LOTE = 400;
 
+/**
+ * Gera as cartelas que **faltam** na faixa pedida.
+ *
+ * Nunca apaga nada: número que já existe é pulado. Isso torna a geração
+ * repetível e incremental (gere 1–500 hoje, 501–1000 amanhã) e tira o
+ * caminho destrutivo do botão que a coordenação mais usa. Para refazer
+ * uma faixa, existe `apagarCartelas`, que tem guarda própria.
+ */
 export async function gerarCartelas(
   sorteioId: string,
   _prevState: GerarCartelasState,
   formData: FormData,
 ): Promise<GerarCartelasState> {
   const quadros = Number(formData.get("quadros"));
-  const confirmouRegerar = formData.get("confirmar_regeracao") === "on";
+  const de = Number(formData.get("de"));
+  const ate = Number(formData.get("ate"));
 
   if (!Number.isInteger(quadros) || quadros < 1 || quadros > 4) {
     return { error: "A cartela pode ter de 1 a 4 quadros." };
+  }
+  if (!Number.isInteger(de) || !Number.isInteger(ate) || ate < de) {
+    return { error: "Informe uma faixa válida (o número final não pode ser menor que o inicial)." };
   }
 
   const supabase = await createClient();
@@ -37,39 +51,40 @@ export async function gerarCartelas(
 
   if (!sorteio) return { error: "Sorteio não encontrado." };
 
-  const { count: jaExistem } = await supabase
-    .from("cartelas")
-    .select("id", { count: "exact", head: true })
-    .eq("sorteio_id", sorteioId);
-
-  if ((jaExistem ?? 0) > 0) {
-    if (!confirmouRegerar) {
-      return {
-        error: `Este sorteio já tem ${jaExistem} cartelas geradas. Marque a confirmação para apagar e gerar de novo.`,
-      };
-    }
-    // Regerar troca a numeração de cartelas que podem já estar impressas e
-    // na mão de vendedores — por isso exige confirmação explícita e fica
-    // registrado na auditoria.
-    const { error: erroDelete } = await supabase
-      .from("cartelas")
-      .delete()
-      .eq("sorteio_id", sorteioId);
-    if (erroDelete) {
-      return { error: `Não foi possível apagar as cartelas anteriores: ${erroDelete.message}` };
-    }
+  if (de < sorteio.cartela_min || ate > sorteio.cartela_max) {
+    return {
+      error: `A faixa precisa ficar dentro das cartelas do sorteio (${sorteio.cartela_min}–${sorteio.cartela_max}). Para ampliar, edite o sorteio.`,
+    };
   }
 
-  const total = sorteio.cartela_max - sorteio.cartela_min + 1;
+  const total = ate - de + 1;
   if (total > 5000) {
-    return { error: `A faixa tem ${total} cartelas — gere em um sorteio com faixa menor.` };
+    return { error: `São ${total} cartelas de uma vez — gere em faixas menores.` };
   }
 
-  // Colisão exata entre duas cartelas é improvável, mas conferir é barato.
-  const vistas = new Set<string>();
-  const linhas: { sorteio_id: string; numero: number; numeros: number[]; quadros: number; gerada_por: string | null }[] = [];
+  // O que já existe nesta faixa é pulado, não sobrescrito.
+  const { data: existentes } = await supabase
+    .from("cartelas")
+    .select("numero")
+    .eq("sorteio_id", sorteioId)
+    .gte("numero", de)
+    .lte("numero", ate);
 
-  for (let numero = sorteio.cartela_min; numero <= sorteio.cartela_max; numero++) {
+  const jaTem = new Set((existentes ?? []).map((c) => c.numero));
+
+  const vistas = new Set<string>();
+  const linhas: {
+    sorteio_id: string;
+    numero: number;
+    numeros: number[];
+    quadros: number;
+    gerada_por: string | null;
+  }[] = [];
+
+  for (let numero = de; numero <= ate; numero++) {
+    if (jaTem.has(numero)) continue;
+
+    // Colisão exata de conjunto é improvável, mas conferir é barato.
     let numeros = gerarNumerosCartela();
     let tentativas = 0;
     while (vistas.has(assinaturaCartela(numeros)) && tentativas < 10) {
@@ -77,6 +92,7 @@ export async function gerarCartelas(
       tentativas++;
     }
     vistas.add(assinaturaCartela(numeros));
+
     linhas.push({
       sorteio_id: sorteioId,
       numero,
@@ -86,13 +102,15 @@ export async function gerarCartelas(
     });
   }
 
+  if (linhas.length === 0) {
+    return { geradas: 0, puladas: jaTem.size };
+  }
+
   for (let i = 0; i < linhas.length; i += TAMANHO_LOTE) {
     const fatia = linhas.slice(i, i + TAMANHO_LOTE);
     const { error } = await supabase.from("cartelas").insert(fatia);
     if (error) {
-      return {
-        error: `Falhou ao gravar a partir da cartela ${fatia[0].numero}: ${error.message}`,
-      };
+      return { error: `Falhou ao gravar a partir da cartela ${fatia[0].numero}: ${error.message}` };
     }
   }
 
@@ -101,22 +119,82 @@ export async function gerarCartelas(
   }
 
   // A geração não tem uma linha "dona" — são centenas de uma vez. Sem este
-  // evento não há como responder depois quem gerou, quando e com que faixa.
+  // evento não há como responder depois quem gerou, quando e qual faixa.
   await supabase.from("eventos_auditoria").insert({
     acao: "cartelas.gerar",
     entidade: "sorteios",
     entidade_id: sorteioId,
-    detalhes: {
-      cartela_min: sorteio.cartela_min,
-      cartela_max: sorteio.cartela_max,
-      quantidade: linhas.length,
-      quadros,
-      regeracao: (jaExistem ?? 0) > 0,
-    },
+    detalhes: { de, ate, quantidade: linhas.length, puladas: jaTem.size, quadros },
     realizado_por: user?.id ?? null,
   });
 
   revalidatePath("/admin/cartelas/gerar");
   revalidatePath("/admin/sorteios");
-  return { geradas: linhas.length };
+  return { geradas: linhas.length, puladas: jaTem.size };
+}
+
+export type ApagarCartelasState = {
+  error?: string;
+  apagadas?: number;
+};
+
+/**
+ * Apaga as cartelas de uma faixa — o caminho para refazer uma geração.
+ *
+ * A guarda é o que importa: número já **distribuído** (dentro de um lote
+ * ativo) não pode ser apagado. Aquela cartela está impressa e na mão de um
+ * vendedor; apagá-la deixaria o papel sem contrapartida no sistema, e a
+ * regeração daria outros números para a mesma cartela nº X.
+ */
+export async function apagarCartelas(
+  sorteioId: string,
+  _prevState: ApagarCartelasState,
+  formData: FormData,
+): Promise<ApagarCartelasState> {
+  const de = Number(formData.get("de"));
+  const ate = Number(formData.get("ate"));
+
+  if (!Number.isInteger(de) || !Number.isInteger(ate) || ate < de) {
+    return { error: "Informe uma faixa válida." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Lote ativo que cruze a faixa = cartela já distribuída. É a mesma
+  // pergunta que `/admin/reservar` faz antes de gravar, então reaproveita a
+  // mesma função em vez de repetir a consulta.
+  const conflito = await findLoteSobreposto(supabase, sorteioId, de, ate);
+
+  if (conflito) {
+    const vendedor = conflito.vendedores?.nome;
+    return {
+      error: `As cartelas ${conflito.numero_inicial}–${conflito.numero_final} já foram reservadas${
+        vendedor ? ` por ${vendedor}` : ""
+      }. Cancele a reserva antes de apagar essa faixa.`,
+    };
+  }
+
+  const { data: apagadas, error } = await supabase
+    .from("cartelas")
+    .delete()
+    .eq("sorteio_id", sorteioId)
+    .gte("numero", de)
+    .lte("numero", ate)
+    .select("numero");
+
+  if (error) return { error: `Não foi possível apagar: ${error.message}` };
+
+  await supabase.from("eventos_auditoria").insert({
+    acao: "cartelas.apagar",
+    entidade: "sorteios",
+    entidade_id: sorteioId,
+    detalhes: { de, ate, quantidade: apagadas?.length ?? 0 },
+    realizado_por: user?.id ?? null,
+  });
+
+  revalidatePath("/admin/cartelas/gerar");
+  return { apagadas: apagadas?.length ?? 0 };
 }

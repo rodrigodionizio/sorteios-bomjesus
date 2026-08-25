@@ -142,7 +142,6 @@ export default async function ImprimirCartelasPage({
               <div className="doc">DOC {docId}</div>
               <div className="cod">{cartela.codigo_verificacao}</div>
               <div className="cart">Cartela {numeroImpresso}</div>
-              <div className="verif">confira em /verificar</div>
             </div>
           </div>
         );
@@ -189,10 +188,14 @@ export default async function ImprimirCartelasPage({
                               {linha.map((valor, ci) =>
                                 valor === null ? (
                                   <td key={ci} className="centro">
+                                    {/* Variante SEM o "65" do brasão: na grade,
+                                        aquele número é uma dezena válida da
+                                        coluna O e confundiria quem está
+                                        marcando com caneta. */}
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
                                       className="celula-logo"
-                                      src="/brand/logo-simbolo-mono-escuro.svg"
+                                      src="/brand/logo-simbolo-sem-numero.svg"
                                       alt=""
                                     />
                                   </td>

@@ -3,20 +3,30 @@
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { definirChavePadrao, alternarChaveAtiva } from "./actions";
+import { EditChaveDialog } from "./edit-chave-dialog";
 
-export function ChaveRowActions({
-  chaveId,
-  ativa,
-  padrao,
-}: {
-  chaveId: string;
+type Chave = {
+  id: string;
+  apelido: string;
+  tipo: string;
+  chave: string;
+  nome_recebedor: string;
+  cidade: string;
+  mensagem: string | null;
+  banco: string | null;
+  observacoes: string | null;
   ativa: boolean;
   padrao: boolean;
-}) {
+};
+
+export function ChaveRowActions({ chave }: { chave: Chave }) {
   const [pending, startTransition] = useTransition();
+  const { id: chaveId, ativa, padrao } = chave;
 
   return (
     <div className="flex items-center justify-end gap-3">
+      <EditChaveDialog chave={chave} />
+
       {!padrao ? (
         <button
           type="button"

@@ -63,6 +63,70 @@ export async function criarChavePix(
   return { success: true };
 }
 
+/**
+ * Editar é indispensável aqui: uma chave digitada errada só se revela
+ * quando alguém tenta pagar pelo QR já impresso. Sem edição, a saída seria
+ * cadastrar outra e reimprimir tudo.
+ *
+ * As cartelas já impressas **não** mudam sozinhas — o QR delas carrega a
+ * chave antiga. Corrigir a chave conserta as próximas impressões; as
+ * folhas que já saíram precisam ser reimpressas.
+ */
+export async function atualizarChavePix(
+  chaveId: string,
+  _prevState: PixFormState,
+  formData: FormData,
+): Promise<PixFormState> {
+  const parsed = pixChaveSchema.safeParse({
+    apelido: formData.get("apelido"),
+    tipo: formData.get("tipo"),
+    chave: formData.get("chave"),
+    nome_recebedor: formData.get("nome_recebedor"),
+    cidade: formData.get("cidade"),
+    mensagem: formData.get("mensagem"),
+    banco: formData.get("banco"),
+    observacoes: formData.get("observacoes"),
+  });
+
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of parsed.error.issues) {
+      fieldErrors[String(issue.path[0])] = issue.message;
+    }
+    return { error: "Confira os campos destacados.", fieldErrors };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("pix_chaves")
+    .update({
+      apelido: parsed.data.apelido,
+      tipo: parsed.data.tipo,
+      chave: parsed.data.chave,
+      nome_recebedor: parsed.data.nome_recebedor,
+      cidade: parsed.data.cidade,
+      mensagem: parsed.data.mensagem ?? null,
+      banco: parsed.data.banco || null,
+      observacoes: parsed.data.observacoes || null,
+    })
+    .eq("id", chaveId);
+
+  if (error) {
+    if (error.code === "23505") {
+      return {
+        error: "Já existe outra chave cadastrada com esse valor.",
+        fieldErrors: { chave: "Chave duplicada." },
+      };
+    }
+    return { error: `Não foi possível salvar: ${error.message}` };
+  }
+
+  revalidatePath("/admin/pix");
+  revalidatePath("/admin/cartelas/gerar");
+  revalidatePath("/admin/cartelas/imprimir");
+  return { success: true };
+}
+
 export async function definirChavePadrao(chaveId: string) {
   const supabase = await createClient();
   // O trigger `trg_pix_chave_padrao` desmarca a anterior sozinho — por isso

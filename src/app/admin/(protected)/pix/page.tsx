@@ -84,7 +84,7 @@ export default async function PixPage() {
                       {usos.length > 0 ? usos.join(", ") : "nenhum ainda"}
                     </td>
                     <td className="px-3 py-2.5">
-                      <ChaveRowActions chaveId={c.id} ativa={c.ativa} padrao={c.padrao} />
+                      <ChaveRowActions chave={c} />
                     </td>
                   </tr>
                 );

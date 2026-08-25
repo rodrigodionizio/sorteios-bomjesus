@@ -65,17 +65,19 @@ td.centro { padding: 2px; }
 .qr svg { display: block; width: 100%; height: 100%; }
 .qr-texto .rot { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
 .qr-texto .instrucao { font-size: 10px; margin-top: 1px; line-height: 1.35; color: #555; }
+/* Pesos contidos: em corpo pequeno, negrito cheio empasta na impressão. */
+.qr-texto .instrucao b { font-weight: 600; color: #111; }
 .qr-texto dl { margin: 4px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 1px 6px; }
-.qr-texto dt { font-size: 9.5px; font-weight: 800; }
+.qr-texto dt { font-size: 9.5px; font-weight: 600; }
 .qr-texto dd { margin: 0; font-size: 9.5px; }
-.qr-texto dd.msg { font-family: ui-monospace, "Courier New", monospace; font-weight: 700; }
+.qr-texto dd.msg { font-family: ui-monospace, "Courier New", monospace; font-weight: 600; }
 
 .canhoto { margin-top: 6mm; border-top: 1.2px dashed #111; padding-top: 3px; }
 .canhoto-aviso { font-size: 8px; text-transform: uppercase; letter-spacing: .14em; color: #888; text-align: center; margin-bottom: 5px; }
 .canhoto-corpo { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end; }
 .campos { display: grid; gap: 7px; }
 .campo { display: grid; grid-template-columns: auto 1fr; gap: 6px; align-items: end; font-size: 11px; }
-.campo .rot { font-weight: 800; }
+.campo .rot { font-weight: 600; }
 .campo .linha { border-bottom: 1px solid #111; height: 13px; }
 
 .carimbo {
@@ -89,7 +91,6 @@ td.centro { padding: 2px; }
 .carimbo .doc { font-size: 7.5px; letter-spacing: .06em; color: #555; }
 .carimbo .cod { font-size: 15px; font-weight: 900; letter-spacing: .06em; }
 .carimbo .cart { font-size: 9px; font-weight: 700; margin-top: 1px; }
-.carimbo .verif { font-size: 7px; color: #555; margin-top: 2px; }
 
 @media print {
   @page { size: A4; margin: 0; }

@@ -8,6 +8,7 @@ import { SorteioSwitcher } from "@/components/admin/sorteio-switcher";
 import { Button } from "@/components/ui/button";
 import { montarBrCode, montarTxid } from "@/lib/pix";
 import { GerarForm } from "./gerar-form";
+import { ApagarForm } from "./apagar-form";
 
 export default async function GerarCartelasPage() {
   const supabase = await createClient();
@@ -27,7 +28,7 @@ export default async function GerarCartelasPage() {
       .from("cartelas")
       .select("numero, quadros, codigo_verificacao, gerada_em", { count: "exact" })
       .eq("sorteio_id", atual.id)
-      .order("numero")
+      .order("numero", { ascending: false })
       .limit(1),
     atual.pix_chave_id
       ? supabase.from("pix_chaves").select("*").eq("id", atual.pix_chave_id).maybeSingle()
@@ -37,6 +38,10 @@ export default async function GerarCartelasPage() {
   const jaGeradas = count ?? 0;
   const totalCartelas = atual.cartela_max - atual.cartela_min + 1;
   const quadrosAtuais = cartelas?.[0]?.quadros ?? null;
+  const maiorGerada = cartelas?.[0]?.numero ?? null;
+  // Começo natural da próxima leva: logo depois da última cartela gerada.
+  const proximaLivre =
+    maiorGerada !== null ? Math.min(maiorGerada + 1, atual.cartela_max) : atual.cartela_min;
 
   // "Copia e cola" da primeira cartela: serve de conferência aqui e é o que
   // a coordenação manda por WhatsApp para quem vai pagar de longe. No papel
@@ -72,9 +77,9 @@ export default async function GerarCartelasPage() {
         {jaGeradas > 0 ? (
           <div className="mb-4.5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-good-bg px-4 py-3">
             <span className="text-[13.5px] font-bold text-good">
-              {formatInt(jaGeradas)} cartelas geradas
+              {formatInt(jaGeradas)} de {formatInt(totalCartelas)} cartelas geradas
               {quadrosAtuais ? ` · ${quadrosAtuais} quadro(s) cada` : ""}
-              {cartelas?.[0] ? ` · em ${formatDateTime(cartelas[0].gerada_em)}` : ""}
+              {cartelas?.[0] ? ` · última em ${formatDateTime(cartelas[0].gerada_em)}` : ""}
             </span>
             <Button
               nativeButton={false}
@@ -86,7 +91,22 @@ export default async function GerarCartelasPage() {
           </div>
         ) : null}
 
-        <GerarForm sorteioId={atual.id} totalCartelas={totalCartelas} jaGeradas={jaGeradas} />
+        <GerarForm
+          sorteioId={atual.id}
+          cartelaMin={atual.cartela_min}
+          cartelaMax={atual.cartela_max}
+          proximaLivre={proximaLivre}
+        />
+
+        {jaGeradas > 0 ? (
+          <div className="mt-5 border-t border-border pt-4">
+            <ApagarForm
+              sorteioId={atual.id}
+              cartelaMin={atual.cartela_min}
+              cartelaMax={atual.cartela_max}
+            />
+          </div>
+        ) : null}
       </section>
 
       <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">

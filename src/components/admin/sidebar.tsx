@@ -26,7 +26,7 @@ const NAV_SECTIONS = [
       { href: "/admin/reservar", label: "Reservar cartelas" },
       { href: "/admin/baixa", label: "Dar baixa" },
       { href: "/admin/importar", label: "Importar planilha" },
-      { href: "/admin/cartelas/gerar", label: "Gerar cartelas (bingo)" },
+      { href: "/admin/cartelas/gerar", label: "Gerar cartelas" },
     ],
   },
   {
