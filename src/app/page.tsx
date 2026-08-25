@@ -29,21 +29,21 @@ export default async function PlacarPage({
 
   if (!sorteio) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-[#2a0d13] px-6 text-center text-bege">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-[#fbf3e2] px-6 text-center text-[#2a0d13]">
         <Image
-          src="/brand/logo-simbolo-mono-claro.svg"
+          src="/brand/logo-simbolo-cor.svg"
           alt="Sorteios Bom Jesus"
           width={48}
           height={48}
         />
         <div>
-          <p className="text-[12.5px] font-bold uppercase tracking-[0.16em] text-bege/70">
+          <p className="text-[12.5px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
             Paróquia Senhor Bom Jesus
           </p>
           <p className="mt-2 text-lg font-semibold">
             Nenhum sorteio cadastrado no momento.
           </p>
-          <p className="mt-1 text-sm text-bege/60">
+          <p className="mt-1 text-sm text-muted-foreground">
             Assim que um sorteio for criado no painel, o placar aparece aqui
             automaticamente.
           </p>
@@ -107,7 +107,7 @@ export default async function PlacarPage({
   };
 
   return (
-    <div className="min-h-screen bg-[#2a0d13] px-4 py-10 text-bege sm:px-8 lg:px-16">
+    <div className="min-h-screen bg-[#fbf3e2] px-4 py-10 text-[#2a0d13] sm:px-8 lg:px-16">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -122,15 +122,15 @@ export default async function PlacarPage({
       </h2>
 
       <div className="mx-auto max-w-4xl lg:max-w-6xl">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-bege/15 pb-5">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
           <div className="flex items-center gap-2">
             <Image
-              src="/brand/logo-simbolo-mono-claro.svg"
+              src="/brand/logo-simbolo-cor.svg"
               alt=""
-              width={22}
-              height={22}
+              width={26}
+              height={26}
             />
-            <span className="text-[12.5px] font-bold uppercase tracking-[0.16em] text-bege/70">
+            <span className="text-[12.5px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
               Paróquia Senhor Bom Jesus
             </span>
           </div>
@@ -144,7 +144,7 @@ export default async function PlacarPage({
 
         {emAndamento.length > 1 ? (
           <div className="mb-7 flex flex-wrap items-center gap-2 text-[12.5px]">
-            <span className="font-bold text-bege/60">
+            <span className="font-bold text-muted-foreground">
               Mais de um sorteio em andamento agora:
             </span>
             {emAndamento.map((s) => (
@@ -154,7 +154,7 @@ export default async function PlacarPage({
                 className={
                   s.id === sorteio?.id
                     ? "rounded-full bg-dourado px-3 py-1 font-black text-[#3a1400]"
-                    : "rounded-full border border-bege/25 px-3 py-1 font-bold text-bege/75 hover:border-bege/45"
+                    : "rounded-full border border-border bg-card px-3 py-1 font-bold text-muted-foreground hover:border-vinho/40"
                 }
               >
                 {s.nome}
@@ -164,35 +164,36 @@ export default async function PlacarPage({
         ) : null}
 
         <div className="mb-9">
-          <p className="mb-0.5 font-humming text-[26px] text-dourado">
+          <p className="mb-0.5 font-humming text-[26px] text-dourado-deep">
             quem vai levar a cartela premiada?
           </p>
           <h1 className="text-[40px] font-black leading-[1.03] tracking-tight text-balance sm:text-[52px]">
-            Ranking do <span className="text-dourado">{sorteio.nome}</span>
+            Ranking do <span className="text-cereja">{sorteio.nome}</span>
           </h1>
-          <p className="mt-2.5 max-w-[60ch] text-[15.5px] text-bege/70">
+          <p className="mt-2.5 max-w-[60ch] text-[15.5px] text-muted-foreground">
             Acompanhe em tempo real quem está confirmando mais cartelas — a
             lista completa ajuda todo mundo a ver a própria posição.
           </p>
-          <p className="mt-3 max-w-[58ch] border-l-2 border-dourado pl-3 text-[13px] text-bege/70">
-            Prêmios para <strong className="text-bege">o(a) maior vendedor(a)</strong>{" "}
-            geral e para <strong className="text-bege">quem vender a cartela sorteada</strong> —
+          <p className="mt-3 max-w-[58ch] border-l-2 border-dourado-deep pl-3 text-[13px] text-muted-foreground">
+            Prêmios para <strong className="text-foreground">o(a) maior vendedor(a)</strong>{" "}
+            geral e para <strong className="text-foreground">quem vender a cartela sorteada</strong> —
             e ela pode estar na mão de qualquer um. Toda cartela confirmada
             conta e aparece aqui.
           </p>
         </div>
 
         {resultado ? (
-          <div className="mb-8 rounded-2xl bg-gradient-to-br from-dourado to-[#f2a23f] p-6 text-[#3a1400] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.55)] sm:p-7">
-            <div className="flex items-center gap-1.5 text-[11.5px] font-extrabold uppercase tracking-wide text-[#3a1400]/65">
+          <div className="mb-8 rounded-2xl bg-gradient-to-br from-vinho to-vinho-deep p-6 text-bege shadow-sm sm:p-7">
+            <div className="flex items-center gap-1.5 text-[11.5px] font-extrabold uppercase tracking-wide text-bege/70">
               <TrophyIcon className="size-4" /> Resultado do sorteio
             </div>
             <h2 className="mt-1.5 text-[24px] font-black leading-tight sm:text-[28px]">
-              A cartela premiada foi a nº {resultado.numero_sorteado}
+              A cartela premiada foi a{" "}
+              <span className="text-dourado">nº {resultado.numero_sorteado}</span>
             </h2>
-            <div className="mt-3.5 grid grid-cols-1 gap-4 border-t border-[#3a1400]/20 pt-3.5 sm:grid-cols-2">
+            <div className="mt-3.5 grid grid-cols-1 gap-4 border-t border-bege/15 pt-3.5 sm:grid-cols-2">
               <div>
-                <div className="text-[10.5px] font-bold uppercase tracking-wide text-[#3a1400]/60">
+                <div className="text-[10.5px] font-bold uppercase tracking-wide text-bege/60">
                   Comprador(a) da cartela
                 </div>
                 <div className="mt-0.5 text-[18px] font-black">
@@ -200,7 +201,7 @@ export default async function PlacarPage({
                 </div>
               </div>
               <div>
-                <div className="text-[10.5px] font-bold uppercase tracking-wide text-[#3a1400]/60">
+                <div className="text-[10.5px] font-bold uppercase tracking-wide text-bege/60">
                   Vendida por
                 </div>
                 <div className="mt-0.5 text-[18px] font-black">
@@ -212,50 +213,50 @@ export default async function PlacarPage({
         ) : null}
 
         {resumo ? (
-          <div className="mb-8 overflow-hidden rounded-2xl border border-bege/15">
-            <div className="grid grid-cols-1 gap-px bg-bege/15 sm:grid-cols-3">
-              <div className="bg-[#3a1119] px-6 py-5">
-                <div className="mb-2 text-xs font-bold uppercase tracking-wide text-bege/60">
+          <div className="mb-8 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <div className="grid grid-cols-1 gap-px bg-border sm:grid-cols-3">
+              <div className="bg-card px-6 py-5">
+                <div className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
                   Cartelas confirmadas
                 </div>
-                <div className="text-[34px] font-black leading-none text-dourado">
+                <div className="text-[34px] font-black leading-none text-dourado-deep">
                   {formatInt(resumo.total_vendidas)}
                 </div>
-                <div className="mt-1.5 text-[13px] text-bege/60">
+                <div className="mt-1.5 text-[13px] text-muted-foreground">
                   baixas registradas
                 </div>
               </div>
-              <div className="bg-[#3a1119] px-6 py-5">
-                <div className="mb-2 text-xs font-bold uppercase tracking-wide text-bege/60">
+              <div className="bg-card px-6 py-5">
+                <div className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
                   Ainda reservadas
                 </div>
-                <div className="text-[34px] font-black leading-none">
+                <div className="text-[34px] font-black leading-none text-vinho-deep">
                   {formatInt(resumo.total_reservadas)}
                 </div>
-                <div className="mt-1.5 text-[13px] text-bege/60">
+                <div className="mt-1.5 text-[13px] text-muted-foreground">
                   com os vendedores, aguardando baixa
                 </div>
               </div>
-              <div className="bg-[#3a1119] px-6 py-5">
-                <div className="mb-2 text-xs font-bold uppercase tracking-wide text-bege/60">
+              <div className="bg-card px-6 py-5">
+                <div className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
                   Total do sorteio
                 </div>
-                <div className="text-[34px] font-black leading-none">
+                <div className="text-[34px] font-black leading-none text-vinho-deep">
                   {formatInt(resumo.total_cartelas_disponiveis)}
                 </div>
-                <div className="mt-1.5 text-[13px] text-bege/60">
+                <div className="mt-1.5 text-[13px] text-muted-foreground">
                   cartelas numeradas neste sorteio
                 </div>
               </div>
             </div>
-            <div className="bg-black/15 px-6 py-4">
-              <div className="mb-2 flex justify-between text-[12.5px] font-bold text-bege/70">
+            <div className="border-t border-border bg-secondary px-6 py-4">
+              <div className="mb-2 flex justify-between text-[12.5px] font-bold text-muted-foreground">
                 <span>Progresso confirmado</span>
-                <strong className="text-dourado">
+                <strong className="text-dourado-deep">
                   {percentConfirmado}% do sorteio
                 </strong>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-bege/10">
+              <div className="h-2 overflow-hidden rounded-full bg-background">
                 <span
                   className="block h-full rounded-full bg-gradient-to-r from-cereja to-dourado"
                   style={{ width: `${percentConfirmado}%` }}
@@ -266,7 +267,7 @@ export default async function PlacarPage({
         ) : null}
 
         {lider ? (
-          <div className="mb-3 grid grid-cols-[84px_1fr_auto] items-center gap-4.5 rounded-2xl bg-gradient-to-br from-dourado to-[#f2a23f] p-6 text-[#3a1400] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.55)]">
+          <div className="mb-3 grid grid-cols-[84px_1fr_auto] items-center gap-4.5 rounded-2xl bg-gradient-to-br from-dourado to-[#f2a23f] p-6 text-[#3a1400] shadow-sm">
             <div className="text-center text-[40px] font-black text-[#3a1400]/55">
               1º
             </div>
@@ -286,7 +287,7 @@ export default async function PlacarPage({
             </div>
           </div>
         ) : (
-          <p className="text-bege/60">
+          <p className="text-muted-foreground">
             Ninguém confirmou vendas ainda neste sorteio.
           </p>
         )}
@@ -295,29 +296,29 @@ export default async function PlacarPage({
           {top5resto.length > 0 ? (
             <div>
               <div className="mb-1 mt-8 flex items-baseline justify-between px-1">
-                <span className="text-xs font-bold uppercase tracking-wide text-bege/60">
+                <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                   Do 2º ao {top5resto.length + 1}º lugar
                 </span>
-                <small className="text-xs text-bege/60">top 5</small>
+                <small className="text-xs text-muted-foreground">top 5</small>
               </div>
               <div className="flex flex-col">
                 {top5resto.map((v) => (
                   <div
                     key={v.vendedor_id}
-                    className="grid grid-cols-[34px_1fr_auto] items-center gap-3.5 border-b border-bege/15 px-1 py-2.5 last:border-none"
+                    className="grid grid-cols-[34px_1fr_auto] items-center gap-3.5 border-b border-border px-1 py-2.5 last:border-none"
                   >
-                    <div className="text-center text-sm font-bold text-bege/60">
+                    <div className="text-center text-sm font-bold text-muted-foreground">
                       {v.posicao}º
                     </div>
                     <div className="text-[15px] font-bold">
                       {v.nome}
-                      <span className="ml-2 rounded-full border border-dourado/45 px-1.5 py-0.5 align-middle text-[9.5px] font-bold uppercase tracking-wide text-dourado">
+                      <span className="ml-2 rounded-full border border-dourado-deep/45 px-1.5 py-0.5 align-middle text-[9.5px] font-bold uppercase tracking-wide text-dourado-deep">
                         Top 5
                       </span>
                     </div>
                     <div className="text-right text-[15px] font-bold">
                       {formatInt(v.total_vendido)}
-                      <span className="mt-0.5 block text-[11px] font-normal text-bege/60">
+                      <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">
                         de {formatInt(v.total_reservado)} reservadas
                       </span>
                     </div>
@@ -330,10 +331,10 @@ export default async function PlacarPage({
           {demais.length > 0 ? (
             <div>
               <div className="mb-1 mt-8 flex items-baseline justify-between px-1">
-                <span className="text-xs font-bold uppercase tracking-wide text-bege/60">
+                <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                   Demais vendedores
                 </span>
-                <small className="text-xs text-bege/60">
+                <small className="text-xs text-muted-foreground">
                   continue vendendo para subir
                 </small>
               </div>
@@ -341,15 +342,15 @@ export default async function PlacarPage({
                 {demais.map((v) => (
                   <div
                     key={v.vendedor_id}
-                    className="grid grid-cols-[34px_1fr_auto] items-center gap-3.5 border-b border-bege/15 px-1 py-2.5 last:border-none"
+                    className="grid grid-cols-[34px_1fr_auto] items-center gap-3.5 border-b border-border px-1 py-2.5 last:border-none"
                   >
-                    <div className="text-center text-sm font-bold text-bege/60">
+                    <div className="text-center text-sm font-bold text-muted-foreground">
                       {v.posicao}º
                     </div>
                     <div className="text-[15px] font-bold">{v.nome}</div>
                     <div className="text-right text-[15px] font-bold">
                       {formatInt(v.total_vendido)}
-                      <span className="mt-0.5 block text-[11px] font-normal text-bege/60">
+                      <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">
                         de {formatInt(v.total_reservado)} reservadas
                       </span>
                     </div>
@@ -360,22 +361,22 @@ export default async function PlacarPage({
           ) : null}
         </div>
 
-        <footer className="mt-10 flex flex-wrap justify-between gap-2.5 border-t border-bege/15 pt-4.5 text-[12.5px] text-bege/60">
+        <footer className="mt-10 flex flex-wrap justify-between gap-2.5 border-t border-border pt-4.5 text-[12.5px] text-muted-foreground">
           <span>
-            Painel atualiza sozinho a cada nova baixa registrada — última
-            atualização às <strong className="text-bege">{horaAtualizacao}</strong>
+            Última atualização às{" "}
+            <strong className="text-foreground">{horaAtualizacao}</strong>
           </span>
           {sorteio.data_sorteio ? (
             <span>
               Sorteio previsto para{" "}
-              <strong className="text-bege">
+              <strong className="text-foreground">
                 {new Intl.DateTimeFormat("pt-BR").format(
                   new Date(`${sorteio.data_sorteio}T00:00:00`),
                 )}
               </strong>
             </span>
           ) : null}
-          <Link href="/admin" className="underline decoration-bege/30 underline-offset-2 hover:text-bege">
+          <Link href="/admin" className="underline decoration-muted-foreground/40 underline-offset-2 hover:text-foreground">
             Área administrativa
           </Link>
         </footer>

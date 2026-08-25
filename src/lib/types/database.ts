@@ -335,7 +335,9 @@ export interface Database {
           sorteio_id: string;
           vendedor_id: string;
           nome: string;
-          telefone: string;
+          // `telefone` saiu da view em schema-v10: a view é lida por `anon`,
+          // e RLS é por linha, não por coluna. Quem precisa do telefone lê
+          // de `vendedores` (só admin). Ver 13-roadmap-e-pendencias.md.
           total_vendido: number;
           total_reservado: number;
           ultima_baixa: string | null;
