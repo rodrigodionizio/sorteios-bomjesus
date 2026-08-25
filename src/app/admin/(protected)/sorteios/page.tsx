@@ -5,15 +5,18 @@ import { StatusPill } from "@/components/admin/status-pill";
 import { SorteioForm } from "./sorteio-form";
 import { StatusActions } from "./status-actions";
 import { CodigoDiretoriaCell } from "./codigo-diretoria-cell";
+import { PixChaveCell } from "./pix-chave-cell";
 
 export default async function SorteiosPage() {
   const supabase = await createClient();
 
-  const [{ data: sorteios }, { data: resumos }, { data: acessos }] = await Promise.all([
-    supabase.from("sorteios").select("*").order("created_at", { ascending: false }),
-    supabase.from("vw_resumo_sorteio").select("*"),
-    supabase.from("acessos_diretoria").select("*"),
-  ]);
+  const [{ data: sorteios }, { data: resumos }, { data: acessos }, { data: chaves }] =
+    await Promise.all([
+      supabase.from("sorteios").select("*").order("created_at", { ascending: false }),
+      supabase.from("vw_resumo_sorteio").select("*"),
+      supabase.from("acessos_diretoria").select("*"),
+      supabase.from("pix_chaves").select("id, apelido").eq("ativa", true).order("apelido"),
+    ]);
 
   return (
     <>
@@ -34,6 +37,7 @@ export default async function SorteiosPage() {
                 <th className="px-3 py-2.5">Preço</th>
                 <th className="px-3 py-2.5">Confirmado</th>
                 <th className="px-3 py-2.5">Sorteio em</th>
+                <th className="px-3 py-2.5">Chave Pix</th>
                 <th className="px-3 py-2.5">Painel da diretoria</th>
                 <th className="px-3 py-2.5" />
               </tr>
@@ -76,6 +80,13 @@ export default async function SorteiosPage() {
                       {s.data_sorteio ? formatDate(`${s.data_sorteio}T00:00:00`) : "—"}
                     </td>
                     <td className="px-3 py-2.5">
+                      <PixChaveCell
+                        sorteioId={s.id}
+                        chaveAtualId={s.pix_chave_id}
+                        chaves={chaves ?? []}
+                      />
+                    </td>
+                    <td className="px-3 py-2.5">
                       <CodigoDiretoriaCell
                         sorteioId={s.id}
                         codigoAtual={acessos?.find((a) => a.sorteio_id === s.id)?.codigo ?? null}
@@ -89,7 +100,7 @@ export default async function SorteiosPage() {
               })}
               {(sorteios ?? []).length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-3 py-6 text-center text-muted-foreground">
+                  <td colSpan={9} className="px-3 py-6 text-center text-muted-foreground">
                     Nenhum sorteio cadastrado ainda.
                   </td>
                 </tr>

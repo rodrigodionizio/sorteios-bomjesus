@@ -20,6 +20,9 @@ export interface Database {
           status: "planejado" | "em_andamento" | "encerrado";
           data_sorteio: string | null;
           created_at: string;
+          // schema-v11 / schema-v12
+          pix_chave_id: string | null;
+          modalidade: "rifa" | "bingo";
         };
         Insert: {
           id?: string;
@@ -31,6 +34,8 @@ export interface Database {
           status?: "planejado" | "em_andamento" | "encerrado";
           data_sorteio?: string | null;
           created_at?: string;
+          pix_chave_id?: string | null;
+          modalidade?: "rifa" | "bingo";
         };
         Update: Partial<Database["public"]["Tables"]["sorteios"]["Insert"]>;
         Relationships: [];
@@ -328,6 +333,68 @@ export interface Database {
         >;
         Relationships: [];
       };
+      // schema-v11
+      pix_chaves: {
+        Row: {
+          id: string;
+          apelido: string;
+          tipo: "cpf" | "cnpj" | "email" | "telefone" | "aleatoria";
+          chave: string;
+          nome_recebedor: string;
+          cidade: string;
+          mensagem: string | null;
+          banco: string | null;
+          observacoes: string | null;
+          ativa: boolean;
+          padrao: boolean;
+          criado_por: string | null;
+          criado_em: string;
+          atualizado_em: string;
+        };
+        Insert: {
+          id?: string;
+          apelido: string;
+          tipo: "cpf" | "cnpj" | "email" | "telefone" | "aleatoria";
+          chave: string;
+          nome_recebedor: string;
+          cidade: string;
+          mensagem?: string | null;
+          banco?: string | null;
+          observacoes?: string | null;
+          ativa?: boolean;
+          padrao?: boolean;
+          criado_por?: string | null;
+          criado_em?: string;
+          atualizado_em?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["pix_chaves"]["Insert"]>;
+        Relationships: [];
+      };
+      // schema-v12
+      cartelas: {
+        Row: {
+          id: string;
+          sorteio_id: string;
+          numero: number;
+          numeros: number[];
+          quadros: number;
+          codigo_verificacao: string;
+          gerada_por: string | null;
+          gerada_em: string;
+        };
+        Insert: {
+          id?: string;
+          sorteio_id: string;
+          numero: number;
+          numeros: number[];
+          quadros?: number;
+          codigo_verificacao?: string;
+          gerada_por?: string | null;
+          gerada_em?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["cartelas"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: {
       vw_ranking_vendedores: {
@@ -413,6 +480,18 @@ export interface Database {
       };
     };
     Functions: {
+      // schema-v12 — consulta pública pelo código do carimbo
+      fn_verificar_cartela: {
+        Args: { p_codigo: string };
+        Returns: {
+          numero: number;
+          quadros: number;
+          numeros: number[];
+          gerada_em: string;
+          sorteio_nome: string;
+          sorteio_data: string | null;
+        }[];
+      };
       fn_localizar_vendedor_por_cartela: {
         Args: { p_sorteio_id: string; p_numero: number };
         Returns: {

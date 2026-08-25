@@ -17,6 +17,7 @@ const NAV_SECTIONS = [
       { href: "/admin/sorteios", label: "Sorteios" },
       { href: "/admin/vendedores", label: "Vendedores" },
       { href: "/admin/usuarios", label: "Usuários" },
+      { href: "/admin/pix", label: "Chaves Pix" },
     ],
   },
   {
@@ -25,6 +26,7 @@ const NAV_SECTIONS = [
       { href: "/admin/reservar", label: "Reservar cartelas" },
       { href: "/admin/baixa", label: "Dar baixa" },
       { href: "/admin/importar", label: "Importar planilha" },
+      { href: "/admin/cartelas/gerar", label: "Gerar cartelas (bingo)" },
     ],
   },
   {
