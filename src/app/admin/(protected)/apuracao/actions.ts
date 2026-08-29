@@ -9,6 +9,7 @@ export type ApuracaoState = {
 
 export async function apurarSorteio(
   sorteioId: string,
+  ordem: number,
   _prevState: ApuracaoState,
   formData: FormData,
 ): Promise<ApuracaoState> {
@@ -18,9 +19,12 @@ export async function apurarSorteio(
   }
 
   const supabase = await createClient();
+  // `p_ordem` diz qual prêmio está sendo apurado. Sem ele, o banco assume 1
+  // — e o 2º prêmio sobrescreveria o 1º.
   const { error } = await supabase.rpc("fn_registrar_resultado_sorteio", {
     p_sorteio_id: sorteioId,
     p_numero_sorteado: numero,
+    p_ordem: ordem,
   });
 
   if (error) {

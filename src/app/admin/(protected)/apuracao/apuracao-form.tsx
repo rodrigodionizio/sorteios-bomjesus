@@ -10,19 +10,22 @@ const initialState: ApuracaoState = {};
 
 export function ApuracaoForm({
   sorteioId,
+  ordem,
   numeroAtual,
 }: {
   sorteioId: string;
+  /** Qual prêmio este formulário apura. */
+  ordem: number;
   numeroAtual?: number;
 }) {
-  const action = apurarSorteio.bind(null, sorteioId);
+  const action = apurarSorteio.bind(null, sorteioId, ordem);
   const [state, formAction, pending] = useActionState(action, initialState);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     if (numeroAtual == null) return;
     const novo = new FormData(event.currentTarget).get("numero_sorteado");
     const confirmado = window.confirm(
-      `Este sorteio já foi apurado com a cartela nº ${numeroAtual}. Registrar a cartela nº ${novo} no lugar? O resultado anterior fica no histórico de auditoria, mas deixa de valer.`,
+      `O ${ordem}º prêmio já foi apurado com a cartela nº ${numeroAtual}. Registrar a cartela nº ${novo} no lugar? O resultado anterior fica no histórico de auditoria, mas deixa de valer.`,
     );
     if (!confirmado) {
       event.preventDefault();
@@ -33,7 +36,7 @@ export function ApuracaoForm({
     <form action={formAction} onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3.5">
       <div className="flex flex-col gap-1.5">
         <Label className="text-[11.5px] font-bold uppercase tracking-wide text-muted-foreground">
-          Cartela premiada
+          Cartela do {ordem}º prêmio
         </Label>
         <Input
           name="numero_sorteado"
@@ -48,7 +51,7 @@ export function ApuracaoForm({
         disabled={pending}
         className="bg-cereja px-6 py-5.5 font-extrabold text-white hover:bg-[var(--brand-vinho-deep)]"
       >
-        {pending ? "Apurando..." : "Apurar sorteio"}
+        {pending ? "Apurando..." : numeroAtual != null ? "Corrigir" : `Apurar ${ordem}º prêmio`}
       </Button>
       {state.error ? (
         <p className="w-full text-sm font-semibold text-bad">{state.error}</p>

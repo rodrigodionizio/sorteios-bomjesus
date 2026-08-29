@@ -20,9 +20,10 @@ export interface Database {
           status: "planejado" | "em_andamento" | "encerrado";
           data_sorteio: string | null;
           created_at: string;
-          // schema-v11 / schema-v12
+          // schema-v11 / schema-v12 / schema-v13
           pix_chave_id: string | null;
           modalidade: "rifa" | "bingo";
+          premios_previstos: number;
         };
         Insert: {
           id?: string;
@@ -36,6 +37,7 @@ export interface Database {
           created_at?: string;
           pix_chave_id?: string | null;
           modalidade?: "rifa" | "bingo";
+          premios_previstos?: number;
         };
         Update: Partial<Database["public"]["Tables"]["sorteios"]["Insert"]>;
         Relationships: [];
@@ -138,9 +140,14 @@ export interface Database {
         Row: {
           id: string;
           sorteio_id: string;
+          // schema-v13: qual prêmio do sorteio este resultado representa.
+          // A única passou de (sorteio_id) para (sorteio_id, ordem).
+          ordem: number;
           numero_sorteado: number;
           vendedor_id: string | null;
           cartela_confirmada: boolean;
+          // Só preenchido no prêmio 1: o maior vendedor é do sorteio,
+          // não da sequência de prêmios.
           maior_vendedor_id: string | null;
           sorteado_em: string;
           registrado_por: string | null;
@@ -148,6 +155,7 @@ export interface Database {
         Insert: {
           id?: string;
           sorteio_id: string;
+          ordem?: number;
           numero_sorteado: number;
           vendedor_id?: string | null;
           cartela_confirmada?: boolean;
@@ -475,6 +483,10 @@ export interface Database {
           vendedor_premiado_nome: string | null;
           nome_comprador: string | null;
           maior_vendedor_nome: string | null;
+          // schema-v13: a view passou a devolver UMA LINHA POR PRÊMIO.
+          // Quem consome precisa listar e ordenar — `.maybeSingle()` aqui
+          // dá erro assim que o 2º prêmio é apurado.
+          ordem: number;
         };
         Relationships: [];
       };
@@ -502,7 +514,8 @@ export interface Database {
         }[];
       };
       fn_registrar_resultado_sorteio: {
-        Args: { p_sorteio_id: string; p_numero_sorteado: number };
+        // `p_ordem` tem default 1 no banco (schema-v13)
+        Args: { p_sorteio_id: string; p_numero_sorteado: number; p_ordem?: number };
         Returns: string;
       };
       fn_vincular_vendedor: {

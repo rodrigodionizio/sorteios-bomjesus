@@ -69,7 +69,13 @@ export default async function PlacarPage({
       .select("*")
       .eq("sorteio_id", sorteio.id)
       .limit(1),
-    supabase.from("vw_resultado_publico").select("*").eq("sorteio_id", sorteio.id).maybeSingle(),
+    // Uma linha por prêmio desde schema-v13. `.maybeSingle()` aqui dava erro
+    // assim que o 2º prêmio fosse apurado.
+    supabase
+      .from("vw_resultado_publico")
+      .select("*")
+      .eq("sorteio_id", sorteio.id)
+      .order("ordem"),
   ]);
 
   const resumo = resumoRows?.[0];
@@ -182,32 +188,43 @@ export default async function PlacarPage({
           </p>
         </div>
 
-        {resultado ? (
+        {(resultado ?? []).length > 0 ? (
           <div className="mb-8 rounded-2xl bg-gradient-to-br from-vinho to-vinho-deep p-6 text-bege shadow-sm sm:p-7">
             <div className="flex items-center gap-1.5 text-[11.5px] font-extrabold uppercase tracking-wide text-bege/70">
-              <TrophyIcon className="size-4" /> Resultado do sorteio
+              <TrophyIcon className="size-4" />{" "}
+              {(resultado ?? []).length > 1 ? "Resultados do sorteio" : "Resultado do sorteio"}
             </div>
-            <h2 className="mt-1.5 text-[24px] font-black leading-tight sm:text-[28px]">
-              A cartela premiada foi a{" "}
-              <span className="text-dourado">nº {resultado.numero_sorteado}</span>
-            </h2>
-            <div className="mt-3.5 grid grid-cols-1 gap-4 border-t border-bege/15 pt-3.5 sm:grid-cols-2">
-              <div>
-                <div className="text-[10.5px] font-bold uppercase tracking-wide text-bege/60">
-                  Comprador(a) da cartela
+
+            <div className="mt-2 flex flex-col gap-4">
+              {(resultado ?? []).map((premio, i) => (
+                <div
+                  key={premio.ordem}
+                  className={i > 0 ? "border-t border-bege/15 pt-4" : ""}
+                >
+                  <h2 className="text-[21px] font-black leading-tight sm:text-[25px]">
+                    {(resultado ?? []).length > 1 ? `${premio.ordem}º prêmio — ` : "A cartela premiada foi a "}
+                    <span className="text-dourado">nº {premio.numero_sorteado}</span>
+                  </h2>
+                  <div className="mt-2.5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <div className="text-[10.5px] font-bold uppercase tracking-wide text-bege/60">
+                        Comprador(a) da cartela
+                      </div>
+                      <div className="mt-0.5 text-[17px] font-black">
+                        {premio.nome_comprador ?? "Não informado"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10.5px] font-bold uppercase tracking-wide text-bege/60">
+                        Vendida por
+                      </div>
+                      <div className="mt-0.5 text-[17px] font-black">
+                        {premio.vendedor_premiado_nome ?? "—"}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-0.5 text-[18px] font-black">
-                  {resultado.nome_comprador ?? "Não informado"}
-                </div>
-              </div>
-              <div>
-                <div className="text-[10.5px] font-bold uppercase tracking-wide text-bege/60">
-                  Vendida por
-                </div>
-                <div className="mt-0.5 text-[18px] font-black">
-                  {resultado.vendedor_premiado_nome ?? "—"}
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         ) : null}

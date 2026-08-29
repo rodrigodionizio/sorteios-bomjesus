@@ -62,6 +62,24 @@ export async function gerarCartelas(
     return { error: `São ${total} cartelas de uma vez — gere em faixas menores.` };
   }
 
+  // Todas as cartelas de um sorteio precisam ter o MESMO número de quadros:
+  // quadros = quantos prêmios a cartela disputa, então uma leva com 3 e
+  // outra com 2 daria a umas cartelas mais chances que a outras dentro do
+  // mesmo sorteio. É injustiça silenciosa, não detalhe técnico.
+  const { data: outraLeva } = await supabase
+    .from("cartelas")
+    .select("quadros")
+    .eq("sorteio_id", sorteioId)
+    .neq("quadros", quadros)
+    .limit(1)
+    .maybeSingle();
+
+  if (outraLeva) {
+    return {
+      error: `Este sorteio já tem cartelas com ${outraLeva.quadros} quadro(s). Gerar com ${quadros} daria mais chances a umas cartelas que a outras — use ${outraLeva.quadros}, ou apague as existentes antes.`,
+    };
+  }
+
   // O que já existe nesta faixa é pulado, não sobrescrito.
   const { data: existentes } = await supabase
     .from("cartelas")
@@ -114,9 +132,14 @@ export async function gerarCartelas(
     }
   }
 
-  if (sorteio.modalidade !== "bingo") {
-    await supabase.from("sorteios").update({ modalidade: "bingo" }).eq("id", sorteioId);
-  }
+  // `quadros` é quantos prêmios a cartela disputa — então ele é a fonte de
+  // verdade de `premios_previstos`, que a apuração usa para saber quantas
+  // apurações oferecer. Mantidos em sincronia aqui, no único lugar que
+  // define os quadros.
+  await supabase
+    .from("sorteios")
+    .update({ modalidade: "bingo", premios_previstos: quadros })
+    .eq("id", sorteioId);
 
   // A geração não tem uma linha "dona" — são centenas de uma vez. Sem este
   // evento não há como responder depois quem gerou, quando e qual faixa.

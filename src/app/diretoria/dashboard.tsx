@@ -28,11 +28,17 @@ export async function Dashboard({ sorteio }: { sorteio: Sorteio }) {
         .eq("sorteio_id", sorteio.id)
         .order("dia", { ascending: false })
         .limit(12),
-      supabase.from("vw_resultado_publico").select("*").eq("sorteio_id", sorteio.id).maybeSingle(),
+      // Uma linha por prêmio desde schema-v13 — `.maybeSingle()` daria erro
+      // a partir do 2º prêmio apurado.
+      supabase
+        .from("vw_resultado_publico")
+        .select("*")
+        .eq("sorteio_id", sorteio.id)
+        .order("ordem"),
     ]);
 
   const resumo = resumoRows?.[0];
-  const resultado = resultadoRows;
+  const premios = resultadoRows ?? [];
   const diarioAsc = (diario ?? []).slice().reverse();
 
   const totalDisponiveis = resumo
@@ -90,33 +96,39 @@ export async function Dashboard({ sorteio }: { sorteio: Sorteio }) {
           </span>
         </div>
 
-        {resultado ? (
+        {premios.length > 0 ? (
           <div className="mb-4 rounded-[20px] bg-gradient-to-br from-vinho to-vinho-deep p-6 text-bege shadow-sm">
             <div className="flex items-center gap-1.5 text-[11.5px] font-extrabold uppercase tracking-wide text-bege/70">
-              <TrophyIcon className="size-4" /> Resultado do sorteio
+              <TrophyIcon className="size-4" />{" "}
+              {premios.length > 1 ? "Resultados do sorteio" : "Resultado do sorteio"}
             </div>
-            <div className="mt-2 text-[15px] font-semibold">
-              Cartela premiada · nº{" "}
-              <b className="text-[22px] font-black text-dourado">{resultado.numero_sorteado}</b>
-            </div>
-            <div className="mt-3.5 grid grid-cols-1 gap-4 border-t border-bege/15 pt-3.5 sm:grid-cols-2">
-              <div>
-                <div className="text-[10.5px] font-bold uppercase tracking-wide text-bege/60">
-                  Comprador(a)
+
+            {premios.map((premio, i) => (
+              <div key={premio.ordem} className={i > 0 ? "mt-3.5 border-t border-bege/15 pt-3.5" : ""}>
+                <div className="mt-2 text-[15px] font-semibold">
+                  {premios.length > 1 ? `${premio.ordem}º prêmio · nº ` : "Cartela premiada · nº "}
+                  <b className="text-[22px] font-black text-dourado">{premio.numero_sorteado}</b>
                 </div>
-                <div className="mt-0.5 text-[16px] font-black">
-                  {resultado.nome_comprador ?? "Não informado"}
+                <div className="mt-2.5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <div className="text-[10.5px] font-bold uppercase tracking-wide text-bege/60">
+                      Comprador(a)
+                    </div>
+                    <div className="mt-0.5 text-[16px] font-black">
+                      {premio.nome_comprador ?? "Não informado"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10.5px] font-bold uppercase tracking-wide text-bege/60">
+                      Vendido por
+                    </div>
+                    <div className="mt-0.5 text-[16px] font-black">
+                      {premio.vendedor_premiado_nome ?? "—"}
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div>
-                <div className="text-[10.5px] font-bold uppercase tracking-wide text-bege/60">
-                  Vendido por
-                </div>
-                <div className="mt-0.5 text-[16px] font-black">
-                  {resultado.vendedor_premiado_nome ?? "—"}
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         ) : null}
 
