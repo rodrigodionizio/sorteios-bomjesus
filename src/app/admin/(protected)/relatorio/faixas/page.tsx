@@ -15,10 +15,12 @@ import { ReportTabs } from "../report-tabs";
  * justamente a leitura sequencial de quem está conferindo cartela por
  * cartela.
  *
- * Cada linha tem **um único status**: um lote 1–100 com baixa de 1–30 vira
- * duas linhas (1–30 baixada, 31–100 pendente). É o que permite a coluna de
- * status responder "sim ou não" em vez de "parcial", e mostra qual metade
- * está pendente.
+ * **Uma linha por faixa reservada** — o lote inteiro, como foi entregue ao
+ * vendedor. Um lote 2201–2250 é uma linha só, mesmo que tenha dez baixas
+ * parciais; a coluna "faltam" diz quantas cartelas ainda não foram
+ * baixadas. Quebrar o lote em um trecho por baixa (como esta tela fazia na
+ * primeira versão) multiplicava as folhas sem acrescentar nada que a aba
+ * "Cartelas distribuídas" já não mostre com mais detalhe.
  *
  * As faixas nunca reservadas entram como "disponível". Com elas, a
  * sequência cobre de `cartela_min` a `cartela_max` sem buraco — e a soma
@@ -26,19 +28,22 @@ import { ReportTabs } from "../report-tabs";
  * relatório conferível contra si mesmo.
  */
 
-type Status = "baixada" | "pendente" | "disponivel";
+type Status = "baixada" | "parcial" | "pendente" | "disponivel";
 
 type Faixa = {
   inicio: number;
   fim: number;
+  quantidade: number;
+  baixadas: number;
+  faltam: number;
   status: Status;
   vendedorNome?: string;
-  forma?: string;
-  confirmadaEm?: string;
+  ultimaBaixaEm?: string;
 };
 
 const ROTULO_STATUS: Record<Status, string> = {
   baixada: "Baixada",
+  parcial: "Parcial",
   pendente: "Pendente",
   disponivel: "Disponível",
 };
@@ -87,45 +92,37 @@ export default async function RelatorioFaixasPage() {
       : { data: [] };
 
   const vendedorNomePorId = new Map((vendedores ?? []).map((v) => [v.id, v.nome]));
-  const lotePorId = new Map((lotes ?? []).map((l) => [l.id, l]));
 
   const faixas: Faixa[] = [];
 
-  // 1. Cada baixa é um trecho confirmado — status fechado, sem ambiguidade.
-  for (const b of baixas ?? []) {
-    const lote = lotePorId.get(b.lote_id);
+  // 1. Uma linha por LOTE — a faixa como foi reservada, inteira. Quantas
+  // baixas ela recebeu (e em quantas partes) não muda o número de linhas;
+  // vira a contagem de "faltam".
+  for (const lote of lotes ?? []) {
+    const baixasDoLote = (baixas ?? []).filter((b) => b.lote_id === lote.id);
+    const baixadas = baixasDoLote.reduce((s, b) => s + b.quantidade, 0);
+    const quantidade = lote.numero_final - lote.numero_inicial + 1;
+    const faltam = quantidade - baixadas;
+
+    // Data da baixa mais recente: diz há quanto tempo aquele lote não anda.
+    const ultimaBaixaEm = baixasDoLote
+      .map((b) => b.created_at)
+      .sort()
+      .at(-1);
+
     faixas.push({
-      inicio: b.numero_inicial,
-      fim: b.numero_final,
-      status: "baixada",
-      vendedorNome: vendedorNomePorId.get(lote?.vendedor_id ?? "") ?? "—",
-      forma: b.forma_confirmacao,
-      confirmadaEm: b.created_at,
+      inicio: lote.numero_inicial,
+      fim: lote.numero_final,
+      quantidade,
+      baixadas,
+      faltam,
+      status: faltam === 0 ? "baixada" : baixadas === 0 ? "pendente" : "parcial",
+      vendedorNome: vendedorNomePorId.get(lote.vendedor_id) ?? "—",
+      ultimaBaixaEm,
     });
   }
 
-  // 2. O que sobra de cada lote depois de descontar as próprias baixas.
-  // Um lote confirmado em partes separadas gera um trecho pendente por
-  // buraco, e não um intervalo só — é isso que mantém cada linha com um
-  // status único.
-  for (const lote of lotes ?? []) {
-    const baixasDoLote = (baixas ?? []).filter((b) => b.lote_id === lote.id);
-    const pendentes = computeGaps(
-      lote.numero_inicial,
-      lote.numero_final,
-      baixasDoLote.map((b) => ({ inicio: b.numero_inicial, fim: b.numero_final })),
-    );
-    for (const p of pendentes) {
-      faixas.push({
-        inicio: p.inicio,
-        fim: p.fim,
-        status: "pendente",
-        vendedorNome: vendedorNomePorId.get(lote.vendedor_id) ?? "—",
-      });
-    }
-  }
-
-  // 3. O que nunca saiu da mão da coordenação. Entra para a sequência não
+  // 2. O que nunca saiu da mão da coordenação. Entra para a sequência não
   // ter buraco: assim dá para descer o dedo pela coluna e conferir que
   // todo número está em alguma linha.
   for (const d of computeGaps(
@@ -133,17 +130,24 @@ export default async function RelatorioFaixasPage() {
     sorteio.cartela_max,
     (lotes ?? []).map((l) => ({ inicio: l.numero_inicial, fim: l.numero_final })),
   )) {
-    faixas.push({ inicio: d.inicio, fim: d.fim, status: "disponivel" });
+    const quantidade = d.fim - d.inicio + 1;
+    faixas.push({
+      inicio: d.inicio,
+      fim: d.fim,
+      quantidade,
+      baixadas: 0,
+      faltam: 0, // nunca foi distribuída: não há baixa a esperar
+      status: "disponivel",
+    });
   }
 
   faixas.sort((a, b) => a.inicio - b.inicio);
 
-  const quantidade = (f: Faixa) => f.fim - f.inicio + 1;
-  const somaPor = (status: Status) =>
-    faixas.filter((f) => f.status === status).reduce((s, f) => s + quantidade(f), 0);
+  const somaPor = (...status: Status[]) =>
+    faixas.filter((f) => status.includes(f.status)).reduce((s, f) => s + f.quantidade, 0);
 
-  const totalBaixadas = somaPor("baixada");
-  const totalPendentes = somaPor("pendente");
+  const totalBaixadas = faixas.reduce((s, f) => s + f.baixadas, 0);
+  const totalPendentes = faixas.reduce((s, f) => s + f.faltam, 0);
   const totalDisponiveis = somaPor("disponivel");
   const totalCartelas = sorteio.cartela_max - sorteio.cartela_min + 1;
 
@@ -215,10 +219,12 @@ export default async function RelatorioFaixasPage() {
             — {formatInt(faixas.length)} faixa(s)
           </span>
           <p className="mb-4 mt-1.5 max-w-[62ch] text-xs text-[#6d5658]">
-            Cada linha é um trecho contínuo com um único status. Percorra de
-            cima para baixo para conferir onde está cada número — a sequência
-            não tem buracos, e a soma das quantidades fecha com o total do
-            sorteio.
+            Uma linha por faixa reservada, inteira — mesmo quando a baixa veio
+            em partes. A coluna <strong>Faltam</strong> diz quantas cartelas
+            daquela faixa ainda não foram baixadas; para ver <em>quais</em>
+            trechos faltam, use a aba &quot;Cartelas distribuídas&quot;. A
+            sequência não tem buracos: a soma das quantidades fecha com o total
+            do sorteio.
           </p>
 
           <table className="w-full border-collapse text-xs">
@@ -227,14 +233,20 @@ export default async function RelatorioFaixasPage() {
                 o que é cada coluna. */}
             <thead className="print:table-header-group">
               <tr className="text-left text-[9.5px] font-bold uppercase tracking-wide text-[#9c8788]">
-                <th className="w-[110px] border-b-[1.5px] border-foreground px-2 py-1.5">Faixa</th>
-                <th className="w-[58px] border-b-[1.5px] border-foreground px-2 py-1.5 text-right">
+                <th className="w-[104px] border-b-[1.5px] border-foreground px-2 py-1.5">Faixa</th>
+                <th className="w-[52px] border-b-[1.5px] border-foreground px-2 py-1.5 text-right">
                   Qtd.
                 </th>
-                <th className="w-[92px] border-b-[1.5px] border-foreground px-2 py-1.5">Status</th>
+                <th className="w-[62px] border-b-[1.5px] border-foreground px-2 py-1.5 text-right">
+                  Baixadas
+                </th>
+                <th className="w-[54px] border-b-[1.5px] border-foreground px-2 py-1.5 text-right">
+                  Faltam
+                </th>
+                <th className="w-[86px] border-b-[1.5px] border-foreground px-2 py-1.5">Status</th>
                 <th className="border-b-[1.5px] border-foreground px-2 py-1.5">Vendedor</th>
-                <th className="w-[150px] border-b-[1.5px] border-foreground px-2 py-1.5">
-                  Confirmação
+                <th className="w-[104px] border-b-[1.5px] border-foreground px-2 py-1.5">
+                  Última baixa
                 </th>
               </tr>
             </thead>
@@ -250,16 +262,28 @@ export default async function RelatorioFaixasPage() {
                     {f.inicio === f.fim ? f.inicio : `${f.inicio} – ${f.fim}`}
                   </td>
                   <td className="px-2 py-1.5 text-right tabular-nums">
-                    {formatInt(quantidade(f))}
+                    {formatInt(f.quantidade)}
+                  </td>
+                  <td className="px-2 py-1.5 text-right tabular-nums">
+                    {f.status === "disponivel" ? "—" : formatInt(f.baixadas)}
+                  </td>
+                  <td
+                    className={`px-2 py-1.5 text-right tabular-nums ${
+                      f.faltam > 0 ? "font-bold text-bad" : ""
+                    }`}
+                  >
+                    {f.status === "disponivel" ? "—" : formatInt(f.faltam)}
                   </td>
                   <td className="px-2 py-1.5">
                     <span
                       className={`inline-block rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wide ${
                         f.status === "baixada"
                           ? "bg-good-bg text-good"
-                          : f.status === "pendente"
-                            ? "bg-bad-bg text-bad"
-                            : "bg-[#efe7d9] text-[#9c8788]"
+                          : f.status === "parcial"
+                            ? "bg-dourado/25 text-dourado-deep"
+                            : f.status === "pendente"
+                              ? "bg-bad-bg text-bad"
+                              : "bg-[#efe7d9] text-[#9c8788]"
                       }`}
                     >
                       {ROTULO_STATUS[f.status]}
@@ -273,15 +297,13 @@ export default async function RelatorioFaixasPage() {
                     )}
                   </td>
                   <td className="px-2 py-1.5 text-[10.5px] text-[#9c8788]">
-                    {f.status === "baixada"
-                      ? `${f.forma} · ${formatDate(f.confirmadaEm!)}`
-                      : "—"}
+                    {f.ultimaBaixaEm ? formatDate(f.ultimaBaixaEm) : "—"}
                   </td>
                 </tr>
               ))}
               {faixas.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-2 py-6 text-center text-[#9c8788]">
+                  <td colSpan={7} className="px-2 py-6 text-center text-[#9c8788]">
                     Nenhuma cartela distribuída ainda neste sorteio.
                   </td>
                 </tr>
