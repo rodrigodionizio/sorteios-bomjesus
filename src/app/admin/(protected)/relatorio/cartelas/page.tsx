@@ -60,7 +60,9 @@ export default async function RelatorioCartelasPage() {
   const lotePorId = new Map((lotes ?? []).map((l) => [l.id, l]));
 
   // 1. Cartelas baixadas — todas as baixas do sorteio, achatadas e ordenadas
-  // por número, sem agrupar por vendedor (o vendedor aparece só como coluna).
+  // por número. O agrupamento por vendedor vem depois (`agruparPorVendedor`),
+  // e é o que diferencia esta aba da de "Faixas em ordem numérica", que
+  // consome exatamente estes mesmos trechos sem agrupar.
   const baixadas = (baixas ?? [])
     .map((b) => ({
       ...b,
