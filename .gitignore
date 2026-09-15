@@ -41,3 +41,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# supabase CLI — estado local do vínculo e do banco em Docker.
+# `supabase/migrations/`, `supabase/config.toml` e `supabase/scripts/`
+# SÃO versionados: são a fonte da verdade do schema.
+supabase/.temp/
+supabase/.branches/

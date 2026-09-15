@@ -1,0 +1,52 @@
+# Configuração do Supabase CLI — Sorteios Bom Jesus.
+#
+# Este arquivo existe para que `supabase` reconheça o repositório como um
+# projeto e saiba onde estão as migrations. Ele NÃO contém segredo nenhum:
+# o vínculo com o projeto real é feito por `supabase link --project-ref <ref>`,
+# que grava em `supabase/.temp/` (ignorado pelo Git).
+#
+# Procedimento completo: supabase/README.md
+
+project_id = "sorteios-bomjesus"
+
+[db]
+port = 54322
+shadow_port = 54320
+# ⚠️ Precisa ser a MESMA major version do projeto hospedado (Supabase →
+# Settings → Database → "Postgres version"). Se divergir, o banco local
+# reproduz um Postgres diferente do de produção e o `db diff` mente.
+major_version = 15
+
+[db.pooler]
+enabled = false
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/auth/callback"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+
+[storage]
+enabled = true
+# `comprovantes` é privado de propósito (ver 06-seguranca-autenticacao-rls.md).
+# O bucket em si não é criado por migration — é criado pelo painel.
+file_size_limit = "50MiB"
+
+[analytics]
+enabled = false

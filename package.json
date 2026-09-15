@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:types": "npx --yes supabase@2 gen types typescript --linked --schema public > src/lib/types/database.ts",
+    "db:new": "npx --yes supabase@2 migration new",
+    "db:push": "npx --yes supabase@2 db push",
+    "db:diff": "npx --yes supabase@2 db diff --linked",
+    "db:list": "npx --yes supabase@2 migration list"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
