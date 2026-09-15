@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/format";
 import { AdminPageHeader } from "@/components/admin/page-header";
@@ -18,6 +19,11 @@ export default async function SorteiosPage() {
       supabase.from("pix_chaves").select("id, apelido").eq("ativa", true).order("apelido"),
     ]);
 
+  // Só a contagem por sorteio — a lista completa vive na tela de prêmios.
+  const { data: premios } = await supabase
+    .from("premios_sorteio")
+    .select("sorteio_id, categoria");
+
   return (
     <>
       <AdminPageHeader breadcrumb="Cadastros / Sorteios" title="Sorteios" />
@@ -37,6 +43,7 @@ export default async function SorteiosPage() {
                 <th className="px-3 py-2.5">Preço</th>
                 <th className="px-3 py-2.5">Confirmado</th>
                 <th className="px-3 py-2.5">Sorteio em</th>
+                <th className="px-3 py-2.5">Prêmios</th>
                 <th className="px-3 py-2.5">Chave Pix</th>
                 <th className="px-3 py-2.5">Painel da diretoria</th>
                 <th className="px-3 py-2.5" />
@@ -80,6 +87,21 @@ export default async function SorteiosPage() {
                       {s.data_sorteio ? formatDate(`${s.data_sorteio}T00:00:00`) : "—"}
                     </td>
                     <td className="px-3 py-2.5">
+                      <PremiosCell
+                        sorteioId={s.id}
+                        cadastrados={
+                          (premios ?? []).filter((p) => p.sorteio_id === s.id).length
+                        }
+                        deCartela={
+                          (premios ?? []).filter(
+                            (p) =>
+                              p.sorteio_id === s.id && p.categoria === "cartela_sorteada",
+                          ).length
+                        }
+                        previstos={s.premios_previstos}
+                      />
+                    </td>
+                    <td className="px-3 py-2.5">
                       <PixChaveCell
                         sorteioId={s.id}
                         chaveAtualId={s.pix_chave_id}
@@ -100,7 +122,7 @@ export default async function SorteiosPage() {
               })}
               {(sorteios ?? []).length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-3 py-6 text-center text-muted-foreground">
+                  <td colSpan={10} className="px-3 py-6 text-center text-muted-foreground">
                     Nenhum sorteio cadastrado ainda.
                   </td>
                 </tr>
@@ -118,5 +140,47 @@ export default async function SorteiosPage() {
         <SorteioForm />
       </section>
     </>
+  );
+}
+
+/**
+ * Atalho para a tela de prêmios, com o aviso de divergência já visível na
+ * listagem: `premios_previstos` diz quantos NÚMEROS serão sorteados, e só
+ * os prêmios de cartela sorteada contam para ele (ver a migration 14).
+ */
+function PremiosCell({
+  sorteioId,
+  cadastrados,
+  deCartela,
+  previstos,
+}: {
+  sorteioId: string;
+  cadastrados: number;
+  deCartela: number;
+  previstos: number;
+}) {
+  const divergente = deCartela !== previstos;
+
+  return (
+    <Link
+      href={`/admin/sorteios/${sorteioId}/premios`}
+      className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[11.5px] font-bold hover:border-vinho/40"
+    >
+      {cadastrados === 0 ? (
+        <span className="text-muted-foreground">cadastrar</span>
+      ) : (
+        <span>
+          {cadastrados} prêmio{cadastrados > 1 ? "s" : ""}
+        </span>
+      )}
+      {divergente ? (
+        <span
+          title={`${previstos} número(s) a sortear, ${deCartela} prêmio(s) de cartela cadastrado(s)`}
+          className="text-bad"
+        >
+          !
+        </span>
+      ) : null}
+    </Link>
   );
 }

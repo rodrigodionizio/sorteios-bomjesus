@@ -378,6 +378,49 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["pix_chaves"]["Insert"]>;
         Relationships: [];
       };
+      // migration 14 (supabase/migrations/20260915090000_premios_sorteio.sql)
+      // A DESCRIÇÃO da premiação. Não participa da apuração — quem apura é
+      // `resultados_sorteio` + `sorteios.premios_previstos`.
+      premios_sorteio: {
+        Row: {
+          id: string;
+          sorteio_id: string;
+          ordem: number;
+          categoria:
+            | "cartela_sorteada"
+            | "maior_vendedor"
+            | "vendedor_cartela_premiada"
+            | "outro";
+          titulo: string;
+          descricao: string | null;
+          valor: number | null;
+          quantidade: number;
+          exibir_publico: boolean;
+          criado_por: string | null;
+          criado_em: string;
+        };
+        Insert: {
+          id?: string;
+          sorteio_id: string;
+          ordem: number;
+          categoria:
+            | "cartela_sorteada"
+            | "maior_vendedor"
+            | "vendedor_cartela_premiada"
+            | "outro";
+          titulo: string;
+          descricao?: string | null;
+          valor?: number | null;
+          quantidade?: number;
+          exibir_publico?: boolean;
+          criado_por?: string | null;
+          criado_em?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["premios_sorteio"]["Insert"]
+        >;
+        Relationships: [];
+      };
       // schema-v12
       cartelas: {
         Row: {
