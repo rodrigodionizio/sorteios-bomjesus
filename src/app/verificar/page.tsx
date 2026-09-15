@@ -7,7 +7,8 @@ import { gradeDaCartela } from "@/lib/bingo";
 
 export const metadata: Metadata = {
   title: "Verificar cartela",
-  description: "Confira se uma cartela de bingo foi emitida pelo sistema da Paróquia Senhor Bom Jesus.",
+  description:
+    "Confira se uma cartela foi realmente emitida pelo sistema da Paróquia Senhor Bom Jesus.",
 };
 
 export const dynamic = "force-dynamic";

@@ -11,8 +11,11 @@ export const metadata: Metadata = {
     default: "Sorteios Bom Jesus — Paróquia Senhor Bom Jesus",
     template: "%s · Sorteios Bom Jesus",
   },
+  // Descrição de SITE, não de página. Enquanto a raiz era o placar as duas
+  // coisas eram a mesma; com a landing na raiz e um placar por sorteio, cada
+  // rota escreve a sua (ver `generateMetadata` em /placar/[sorteioId]).
   description:
-    "Acompanhe ao vivo o ranking de vendedores do sorteio da Paróquia Senhor Bom Jesus — quantas cartelas cada um já confirmou e quem está mais perto de vencer.",
+    "Sistema de gestão de sorteios da Paróquia Senhor Bom Jesus: sorteios em andamento, placar ao vivo dos vendedores e verificação de cartelas.",
   applicationName: "Sorteios Bom Jesus",
   authors: [{ name: "Paróquia Senhor Bom Jesus" }],
   keywords: [
@@ -23,23 +26,20 @@ export const metadata: Metadata = {
     "gestão de sorteio",
     "placar de vendedores",
   ],
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     type: "website",
     locale: "pt_BR",
     url: SITE_URL,
     siteName: "Sorteios Bom Jesus",
-    title: "Sorteios Bom Jesus — Placar ao vivo",
+    title: "Sorteios Bom Jesus",
     description:
-      "Ranking em tempo real dos vendedores do sorteio da Paróquia Senhor Bom Jesus.",
+      "Sorteios da Paróquia Senhor Bom Jesus — placar ao vivo e verificação de cartelas.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Sorteios Bom Jesus — Placar ao vivo",
+    title: "Sorteios Bom Jesus",
     description:
-      "Ranking em tempo real dos vendedores do sorteio da Paróquia Senhor Bom Jesus.",
+      "Sorteios da Paróquia Senhor Bom Jesus — placar ao vivo e verificação de cartelas.",
   },
   robots: {
     index: true,
