@@ -6,6 +6,12 @@ import { createPublicClient } from "@/lib/supabase/public";
 import { formatInt } from "@/lib/format";
 import { rotuloModalidadePublico } from "@/lib/modalidade";
 import { DESTINATARIO, rotuloPremio, type Premio } from "@/lib/premios";
+import {
+  formatarNumeroCartela,
+  montarPremiados,
+  type ResultadoPublico,
+} from "@/lib/resultado";
+import { FaixaResultado } from "@/components/placar/faixa-resultado";
 
 /**
  * A porta de entrada pública.
@@ -54,10 +60,29 @@ export default async function LandingPage() {
 
   const todos = sorteios ?? [];
   const emAndamento = todos.filter((s) => s.status === "em_andamento");
-  const encerrados = todos.filter((s) => s.status === "encerrado").slice(0, 4);
 
   const premiosDe = (sorteioId: string) =>
     ((premios ?? []) as Premio[]).filter((p) => p.sorteio_id === sorteioId);
+  const resultadosDe = (sorteioId: string) =>
+    ((resultados ?? []) as ResultadoPublico[]).filter((r) => r.sorteio_id === sorteioId);
+
+  // O destaque dourado: o encerrado mais recente QUE TENHA APURAÇÃO. Um
+  // sorteio encerrado sem resultado registrado não tem o que destacar.
+  // `sorteios` já vem do mais novo para o mais antigo.
+  const destaque = todos.find(
+    (s) => s.status === "encerrado" && resultadosDe(s.id).length > 0,
+  );
+  const faixaResultado = destaque ? (
+    <FaixaResultado
+      sorteio={destaque}
+      premiados={montarPremiados(resultadosDe(destaque.id), premiosDe(destaque.id))}
+    />
+  ) : null;
+
+  // O destacado não se repete na lista de encerrados logo abaixo.
+  const encerrados = todos
+    .filter((s) => s.status === "encerrado" && s.id !== destaque?.id)
+    .slice(0, 4);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -123,6 +148,8 @@ export default async function LandingPage() {
               ))}
             </div>
 
+            {faixaResultado ? <div className="mt-3.5">{faixaResultado}</div> : null}
+
             <RotuloSecao titulo="Serviços rápidos" nota="sem precisar de conta" />
             <Atalhos />
 
@@ -145,7 +172,10 @@ export default async function LandingPage() {
             ) : null}
           </>
         ) : (
-          <SemSorteioAtivo encerrados={encerrados} resultados={resultados ?? []} />
+          <>
+            {faixaResultado ? <div className="pt-7 sm:pt-9">{faixaResultado}</div> : null}
+            <SemSorteioAtivo encerrados={encerrados} resultados={resultados ?? []} />
+          </>
         )}
       </main>
 
@@ -317,7 +347,7 @@ function CardEncerrado({
   premiado,
 }: {
   sorteio: SorteioRow;
-  premiado?: { numero_sorteado: number; vendedor_premiado_nome: string | null };
+  premiado?: { numero_sorteado: number; nome_comprador: string | null };
 }) {
   return (
     <Link
@@ -331,10 +361,13 @@ function CardEncerrado({
       <p className="mt-0.5 text-[13px] leading-snug text-muted-foreground">
         {premiado ? (
           <>
-            Cartela premiada <b className="text-foreground">nº {premiado.numero_sorteado}</b>
-            {premiado.vendedor_premiado_nome
-              ? ` · vendida por ${premiado.vendedor_premiado_nome}`
-              : ""}
+            {/* O ganhador é quem comprou. Na área pública de um sorteio
+                encerrado o destaque é de quem levou o prêmio. */}
+            Cartela premiada{" "}
+            <b className="text-foreground">
+              nº {formatarNumeroCartela(premiado.numero_sorteado, sorteio.cartela_max)}
+            </b>
+            {premiado.nome_comprador ? ` · ${premiado.nome_comprador}` : ""}
           </>
         ) : (
           "Resultado disponível no placar."
@@ -402,7 +435,7 @@ function SemSorteioAtivo({
   resultados,
 }: {
   encerrados: SorteioRow[];
-  resultados: { sorteio_id: string; numero_sorteado: number; vendedor_premiado_nome: string | null }[];
+  resultados: { sorteio_id: string; numero_sorteado: number; nome_comprador: string | null }[];
 }) {
   const passos = [
     {

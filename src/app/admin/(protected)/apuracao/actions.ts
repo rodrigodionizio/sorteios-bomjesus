@@ -34,5 +34,9 @@ export async function apurarSorteio(
   revalidatePath("/admin/apuracao");
   revalidatePath("/admin");
   revalidatePath("/admin/sorteios");
+  // A home é ISR (5 min) e mostra a faixa de resultado. Sem isto, o número
+  // apurado levaria até 5 minutos para aparecer lá.
+  revalidatePath("/");
+  revalidatePath(`/placar/${sorteioId}`);
   return {};
 }

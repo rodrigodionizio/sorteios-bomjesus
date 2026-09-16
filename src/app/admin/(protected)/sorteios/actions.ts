@@ -63,6 +63,10 @@ export async function updateSorteioStatus(
 
   revalidatePath("/admin/sorteios");
   revalidatePath("/admin");
+  // Mudar o status move o sorteio entre "em andamento", "encerrados" e a
+  // faixa de resultado da home — que é ISR e não perceberia sozinha.
+  revalidatePath("/");
+  revalidatePath(`/placar/${sorteioId}`);
 }
 
 export async function regenerarCodigoDiretoria(sorteioId: string): Promise<string> {

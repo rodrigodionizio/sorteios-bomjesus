@@ -15,6 +15,8 @@ import {
   type Premio,
 } from "@/lib/premios";
 import { RealtimeRefresher } from "@/components/placar/realtime-refresher";
+import { ResultadoFinal } from "@/components/placar/resultado-final";
+import { montarPremiados, type ResultadoPublico } from "@/lib/resultado";
 
 /**
  * O placar. Ficava na raiz do site — a raiz agora é a landing, e cada
@@ -46,8 +48,13 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     return { title: "Sorteio não encontrado", robots: { index: false } };
   }
 
-  const titulo = `Placar ao vivo — ${sorteio.nome}`;
-  const descricao = `Acompanhe o ranking de vendedores do ${sorteio.nome}, da Paróquia Senhor Bom Jesus: quantas cartelas cada um já confirmou e, depois da apuração, o número premiado.`;
+  const encerrado = sorteio.status === "encerrado";
+  const titulo = encerrado
+    ? `Resultado — ${sorteio.nome}`
+    : `Placar ao vivo — ${sorteio.nome}`;
+  const descricao = encerrado
+    ? `Veja as cartelas sorteadas e os premiados do ${sorteio.nome}, da Paróquia Senhor Bom Jesus.`
+    : `Acompanhe o ranking de vendedores do ${sorteio.nome}, da Paróquia Senhor Bom Jesus: quantas cartelas cada um já confirmou e, depois da apuração, o número premiado.`;
 
   return {
     title: titulo,
@@ -71,6 +78,10 @@ export default async function PlacarPage({ params }: Params) {
 
   const sorteio = await carregarSorteio(sorteioId);
   if (!sorteio) notFound();
+
+  if (sorteio.status === "encerrado") {
+    return <PaginaResultado sorteio={sorteio} />;
+  }
 
   const [
     { data: sorteios },
@@ -174,8 +185,10 @@ export default async function PlacarPage({ params }: Params) {
                 Ao vivo
               </span>
             ) : (
-              <span className="inline-flex items-center rounded-full bg-[#efe7d9] px-3.5 py-1.5 text-[13px] font-black uppercase tracking-wide text-[#8a7375]">
-                Encerrado
+              // Encerrado nunca chega aqui (vai para `PaginaResultado`); o que
+              // sobra é o sorteio ainda `planejado`.
+              <span className="inline-flex items-center rounded-full bg-bege px-3.5 py-1.5 text-[13px] font-black uppercase tracking-wide text-dourado-deep">
+                Em breve
               </span>
             )}
           </div>
@@ -480,6 +493,90 @@ function PremiacaoResumo({ premios }: { premios: Premio[] }) {
           confirmada conta e aparece neste ranking.
         </p>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * Sorteio encerrado: só os vencedores.
+ *
+ * Sem ranking, sem KPI, sem barra de progresso e sem `RealtimeRefresher` —
+ * não há mais o que atualizar. O bloco de resultado vinho do placar ao vivo
+ * continua existindo lá embaixo, para o intervalo em que o 1º prêmio já foi
+ * apurado mas o sorteio ainda não foi encerrado.
+ */
+async function PaginaResultado({
+  sorteio,
+}: {
+  sorteio: {
+    id: string;
+    nome: string;
+    data_sorteio: string | null;
+    cartela_min: number;
+    cartela_max: number;
+  };
+}) {
+  const supabase = createPublicClient();
+
+  const [{ data: resultados }, { data: premios }] = await Promise.all([
+    supabase
+      .from("vw_resultado_publico")
+      .select("*")
+      .eq("sorteio_id", sorteio.id)
+      .order("ordem"),
+    supabase
+      .from("premios_sorteio")
+      .select("*")
+      .eq("sorteio_id", sorteio.id)
+      .order("ordem"),
+  ]);
+
+  const listaPremios = (premios ?? []) as Premio[];
+  const premiados = montarPremiados(
+    (resultados ?? []) as ResultadoPublico[],
+    listaPremios,
+  );
+
+  return (
+    <div className="min-h-screen bg-[#fbf3e2] px-4 py-8 text-[#2a0d13] sm:px-8 sm:py-10 lg:px-16">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/brand/logo-simbolo-cor.svg"
+              alt="Sorteios Bom Jesus"
+              width={26}
+              height={26}
+            />
+            <span className="text-[12.5px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+              Paróquia Senhor Bom Jesus
+            </span>
+          </Link>
+          <span className="inline-flex items-center rounded-full bg-[#efe7d9] px-3.5 py-1.5 text-[13px] font-black uppercase tracking-wide text-[#8a7375]">
+            Encerrado
+          </span>
+        </div>
+
+        <ResultadoFinal sorteio={sorteio} premiados={premiados} premios={listaPremios} />
+
+        <footer className="mt-10 flex flex-wrap justify-between gap-2.5 border-t border-border pt-4.5 text-[12.5px] text-muted-foreground">
+          <span>Paróquia Senhor Bom Jesus</span>
+          <span className="flex gap-3">
+            <Link
+              href="/"
+              className="underline decoration-muted-foreground/40 underline-offset-2 hover:text-foreground"
+            >
+              Ver outros sorteios
+            </Link>
+            <Link
+              href="/verificar"
+              className="underline decoration-muted-foreground/40 underline-offset-2 hover:text-foreground"
+            >
+              Conferir cartela
+            </Link>
+          </span>
+        </footer>
+      </div>
     </div>
   );
 }
