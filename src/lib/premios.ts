@@ -14,13 +14,14 @@ export type Premio = {
   valor: number | null;
   quantidade: number;
   exibir_publico: boolean;
+  /** Ver `premios_sorteio.principal` (migration 16). */
+  principal: boolean;
 };
 
 /**
  * A quem o prêmio vai. É o eixo que faltava: `sorteios.premios_previstos`
  * conta só os prêmios do comprador (os que dependem de um número sorteado),
- * e por isso a premiação de vendedor — os R$ 2.000 e a moto de 2026 — nunca
- * coube nele. Ver a migration 14.
+ * e por isso a premiação de vendedor nunca coube nele. Ver a migration 14.
  */
 export const DESTINATARIO: Record<CategoriaPremio, "comprador" | "vendedor"> = {
   cartela_sorteada: "comprador",
@@ -40,7 +41,7 @@ export const ROTULO_CATEGORIA: Record<CategoriaPremio, string> = {
 export const DESCRICAO_CATEGORIA: Record<CategoriaPremio, string> = {
   cartela_sorteada: "para quem comprou a cartela sorteada",
   maior_vendedor: "para quem mais vender cartelas",
-  vendedor_cartela_premiada: "para quem vender a cartela sorteada",
+  vendedor_cartela_premiada: "para quem vender a cartela sorteada no prêmio principal",
   outro: "",
 };
 

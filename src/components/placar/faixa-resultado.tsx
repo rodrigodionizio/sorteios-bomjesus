@@ -16,23 +16,17 @@ export function FaixaResultado({
   sorteio: { id: string; nome: string; cartela_max: number };
   premiados: Premiado[];
 }) {
-  const chips = premiados
-    .map((p) =>
-      p.tipo === "cartela"
-        ? {
-            chave: p.chave,
-            rotulo: `${p.rotulo.replace(" · cartela sorteada", "")} · nº ${formatarNumeroCartela(p.numero, sorteio.cartela_max)}`,
-            nome: p.comprador,
-          }
-        : p.rotulo === "Maior vendedor(a)"
-          ? { chave: p.chave, rotulo: p.rotulo, nome: p.vendedor }
-          : null,
-    )
-    .filter((c) => c !== null)
-    // Deduplicado: com dois prêmios de maior vendedor cadastrados, a
-    // apuração ainda guarda um nome só — dois chips iguais não informam nada.
-    .filter((c, i, lista) => lista.findIndex((o) => o.rotulo === c.rotulo) === i)
-    .slice(0, 4);
+  // Um chip por prêmio: o de cartela mostra o ganhador (quem comprou); o de
+  // venda, o vendedor. `premiados` já chega com o principal primeiro.
+  const chips = premiados.slice(0, 4).map((p) =>
+    p.tipo === "cartela"
+      ? {
+          chave: p.chave,
+          rotulo: `${p.principal ? "Prêmio principal" : p.titulo} · nº ${formatarNumeroCartela(p.numero, sorteio.cartela_max)}`,
+          nome: p.comprador,
+        }
+      : { chave: p.chave, rotulo: p.rotulo, nome: p.vendedor },
+  );
 
   return (
     <Link

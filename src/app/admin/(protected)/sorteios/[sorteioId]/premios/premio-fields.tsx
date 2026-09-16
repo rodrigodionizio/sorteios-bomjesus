@@ -36,18 +36,28 @@ export const PREMIO_VAZIO: ValoresPremio = {
 export function PremioFields({
   valores,
   fieldErrors,
+  categoriaTravada = false,
 }: {
   valores: ValoresPremio;
   fieldErrors?: Record<string, string>;
+  /**
+   * Prêmio principal: a categoria não muda (o banco recusa). Um `<select>`
+   * desabilitado não entra no FormData — por isso o valor vai num hidden.
+   */
+  categoriaTravada?: boolean;
 }) {
   const err = (campo: string) => fieldErrors?.[campo];
 
   return (
     <>
       <Campo label="A quem se destina" error={err("categoria")}>
+        {categoriaTravada ? (
+          <input type="hidden" name="categoria" value={valores.categoria} />
+        ) : null}
         <select
-          name="categoria"
+          name={categoriaTravada ? undefined : "categoria"}
           defaultValue={valores.categoria}
+          disabled={categoriaTravada}
           required
           className="h-11 w-full rounded-lg border border-input bg-transparent px-3 text-[15px] font-semibold outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 sm:h-10 sm:text-sm"
         >
@@ -58,6 +68,12 @@ export function PremioFields({
             </option>
           ))}
         </select>
+        {categoriaTravada ? (
+          <p className="text-[11.5px] text-muted-foreground">
+            Este é o prêmio principal: ele é sempre de cartela sorteada. Para
+            mudar a categoria, promova outro prêmio a principal na tela Sorteios.
+          </p>
+        ) : null}
       </Campo>
 
       <Campo label="O prêmio" error={err("titulo")}>
@@ -98,14 +114,14 @@ export function PremioFields({
       <p className="-mt-1.5 text-[11.5px] leading-relaxed text-muted-foreground">
         Dois prêmios iguais são <strong>uma linha com quantidade 2</strong>, não
         duas linhas. O valor é opcional: deixe em branco quando a paróquia não
-        quiser publicar quanto vale (o caso da moto).
+        quiser publicar quanto o prêmio vale.
       </p>
 
       <Campo label="Detalhe (opcional)" error={err("descricao")}>
         <Input
           name="descricao"
           defaultValue={valores.descricao}
-          placeholder="Ex.: Para os dois vendedores com maior número de cartelas vendidas."
+          placeholder="Ex.: Entregue na missa de encerramento."
           maxLength={400}
         />
       </Campo>

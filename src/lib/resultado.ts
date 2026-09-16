@@ -1,27 +1,21 @@
+import type { Database } from "@/lib/types/database";
 import type { Premio } from "@/lib/premios";
 
-/** Uma linha de `vw_resultado_publico` — uma por número sorteado. */
-export type ResultadoPublico = {
-  sorteio_id: string;
-  ordem: number;
-  numero_sorteado: number;
-  cartela_confirmada: boolean;
-  nome_comprador: string | null;
-  vendedor_premiado_nome: string | null;
-  maior_vendedor_nome: string | null;
-};
+/** Uma linha de `vw_premiados_publico` — um prêmio público, vencedor já resolvido. */
+export type PremiadoPublico = Database["public"]["Views"]["vw_premiados_publico"]["Row"];
 
 /**
- * Um cartão da tela de resultado. Há dois tipos, porque há duas famílias de
- * prêmio (ver a migration 14): o do número sorteado, que tem cartela,
- * comprador e vendedor; e o de venda, que só tem o vendedor.
+ * Um cartão da tela de resultado. Há dois tipos porque há duas famílias de
+ * prêmio: o de cartela sorteada, que tem número, comprador e vendedor; e o
+ * de venda, que só tem o vendedor.
  */
 export type Premiado =
   | {
       tipo: "cartela";
       chave: string;
       rotulo: string;
-      titulo: string | null;
+      titulo: string;
+      principal: boolean;
       numero: number;
       comprador: string | null;
       vendedor: string | null;
@@ -32,86 +26,78 @@ export type Premiado =
       tipo: "venda";
       chave: string;
       rotulo: string;
-      titulo: string | null;
+      titulo: string;
       vendedor: string | null;
-      /** Só existe para o prêmio de quem vendeu a cartela premiada. */
       vendaConfirmada: boolean | null;
     };
 
+const ROTULO_VENDA: Partial<Record<PremiadoPublico["categoria"], string>> = {
+  maior_vendedor: "Maior vendedor(a)",
+  vendedor_cartela_premiada: "Vendeu a cartela do prêmio principal",
+};
+
+const principalPrimeiro = (a: PremiadoPublico, b: PremiadoPublico) =>
+  Number(b.principal) - Number(a.principal) || a.ordem - b.ordem;
+
 /**
- * Casa a premiação cadastrada com o que a apuração registrou.
+ * Converte as linhas da view em cartões. **Não decide vencedor nenhum.**
  *
- * COMO O CASAMENTO É FEITO — e por que não é por `ordem`:
- * `premios_sorteio.ordem` é posição de EXIBIÇÃO, contada entre todas as
- * categorias. No sorteio de 2026 os prêmios de vendedor foram cadastrados
- * primeiro e ocupam as ordens 1 e 2; os de cartela sorteada vêm depois.
- * Comparar `premio.ordem` com `resultado.ordem` ligaria o 1º número sorteado
- * à moto. O casamento correto é por POSIÇÃO dentro da categoria: o k-ésimo
- * prêmio `cartela_sorteada` é o do k-ésimo número sorteado.
+ * Quem ganhou cada prêmio — inclusive que o prêmio de quem vendeu a cartela
+ * premiada vai para o vendedor da cartela do PRÊMIO PRINCIPAL — é resolvido
+ * em SQL, em `vw_premiados_publico` (migration 16). Aqui só se escolhe o que
+ * exibir (o que já foi apurado) e em que ordem (principal primeiro).
  *
- * (O comentário da coluna `ordem` na migration 14 diz que as duas ordens
- * coincidem. Não coincidem — e a migration já aplicada não é editada.)
- *
- * Sorteio sem premiação cadastrada continua funcionando: os cartões saem com
- * rótulo genérico ("1º prêmio", "Maior vendedor(a)").
+ * Uma versão anterior casava prêmio com número pela posição na lista e
+ * escolhia sozinha o 1º número apurado para o prêmio do vendedor. Era regra
+ * de negócio morando no front, e nem tinha sido definida pela coordenação.
  */
-export function montarPremiados(
-  resultados: ResultadoPublico[],
-  premios: Premio[],
-): Premiado[] {
-  const apurados = [...resultados].sort((a, b) => a.ordem - b.ordem);
-  if (apurados.length === 0) return [];
+export function montarPremiados(linhas: PremiadoPublico[]): Premiado[] {
+  const apurados = linhas.filter((l) => l.apurado);
 
-  const porCategoria = (categoria: Premio["categoria"]) =>
-    premios.filter((p) => p.categoria === categoria).sort((a, b) => a.ordem - b.ordem);
-
-  const deCartela = porCategoria("cartela_sorteada");
-  // O maior vendedor e o vendedor da cartela premiada são gravados só na
-  // linha do 1º prêmio — são do sorteio, não da sequência de números.
-  const primeiro = apurados[0];
-
-  const cartelas: Premiado[] = apurados.map((r, i) => ({
-    tipo: "cartela",
-    chave: `cartela-${r.ordem}`,
-    rotulo:
-      apurados.length > 1 ? `${r.ordem}º prêmio · cartela sorteada` : "Cartela sorteada",
-    titulo: deCartela[i]?.titulo ?? null,
-    numero: r.numero_sorteado,
-    comprador: r.nome_comprador,
-    vendedor: r.vendedor_premiado_nome,
-    vendaConfirmada: r.cartela_confirmada,
-  }));
-
-  const maiorVendedor = porCategoria("maior_vendedor");
-  const vendas: Premiado[] = (
-    maiorVendedor.length > 0 ? maiorVendedor : [null]
-  )
-    // Sem prêmio cadastrado E sem nome registrado, não há o que mostrar.
-    .filter((p) => p !== null || primeiro.maior_vendedor_nome !== null)
-    .map((p, i) => ({
-      tipo: "venda",
-      chave: `maior-vendedor-${i}`,
-      rotulo: "Maior vendedor(a)",
-      // "2 × R$ 2.000" num cartão com UM nome sugeriria que a pessoa levou
-      // os dois. A apuração guarda um só maior vendedor — ver a lacuna
-      // registrada em 17-proposta-evolucao-2026.md.
-      titulo: p?.titulo ?? null,
-      vendedor: primeiro.maior_vendedor_nome,
-      vendaConfirmada: null,
+  const cartelas: Premiado[] = apurados
+    .filter((l) => l.categoria === "cartela_sorteada" && l.numero_sorteado !== null)
+    .sort(principalPrimeiro)
+    .map((l) => ({
+      tipo: "cartela",
+      chave: l.premio_id,
+      rotulo: l.principal ? "Prêmio principal" : "Cartela sorteada",
+      titulo: l.titulo,
+      principal: l.principal,
+      numero: l.numero_sorteado as number,
+      comprador: l.nome_comprador,
+      vendedor: l.vendedor_nome,
+      vendaConfirmada: l.venda_confirmada ?? false,
     }));
 
-  for (const p of porCategoria("vendedor_cartela_premiada")) {
-    vendas.push({
+  const vendas: Premiado[] = apurados
+    .filter((l) => ROTULO_VENDA[l.categoria] !== undefined)
+    .sort((a, b) => a.ordem - b.ordem)
+    .map((l) => ({
       tipo: "venda",
-      chave: `vendedor-cartela-${p.id}`,
-      rotulo: "Vendeu a cartela premiada",
-      titulo: p.titulo,
-      vendedor: primeiro.vendedor_premiado_nome,
-      vendaConfirmada: primeiro.cartela_confirmada,
-    });
-  }
+      chave: l.premio_id,
+      rotulo: ROTULO_VENDA[l.categoria] as string,
+      titulo: l.titulo,
+      vendedor: l.vendedor_nome,
+      vendaConfirmada: l.venda_confirmada,
+    }));
 
   return [...cartelas, ...vendas];
+}
+
+/** A premiação anunciada, das mesmas linhas — para a lista descritiva. */
+export function premiosDasLinhas(linhas: PremiadoPublico[]): Premio[] {
+  return [...linhas].sort(principalPrimeiro).map((l) => ({
+    id: l.premio_id,
+    sorteio_id: l.sorteio_id,
+    ordem: l.ordem,
+    categoria: l.categoria,
+    titulo: l.titulo,
+    descricao: l.descricao,
+    valor: l.valor,
+    quantidade: l.quantidade,
+    exibir_publico: true,
+    principal: l.principal,
+  }));
 }
 
 /**

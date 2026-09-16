@@ -55,6 +55,30 @@ export function SorteioForm() {
         <Input name="descricao" placeholder="Ex.: campanha para reforma do salão paroquial" />
       </Field>
 
+      {/* Regra 22: sem prêmio principal o banco não grava o sorteio. É dele
+          que sai o vencedor do prêmio de quem vendeu a cartela premiada. */}
+      <fieldset className="flex flex-col gap-3.5 rounded-xl border border-dourado-deep/35 bg-bege/40 p-4">
+        <legend className="px-1.5 text-[11.5px] font-black uppercase tracking-wide text-dourado-deep">
+          Prêmio principal
+        </legend>
+        <p className="-mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
+          Obrigatório. É um prêmio de cartela sorteada, e quem vender a cartela
+          sorteada nele leva o prêmio de vendedor da cartela premiada. Os demais
+          prêmios são cadastrados depois, na tela de prêmios do sorteio.
+        </p>
+        <Field label="O prêmio" error={err("premio_titulo")}>
+          <Input name="premio_titulo" placeholder="Descreva o prêmio principal" maxLength={120} required />
+        </Field>
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+          <Field label="Valor (opcional)" error={err("premio_valor")}>
+            <Input name="premio_valor" type="number" inputMode="decimal" step="0.01" min={0} placeholder="em branco = não publicar" />
+          </Field>
+          <Field label="Detalhe (opcional)" error={err("premio_descricao")}>
+            <Input name="premio_descricao" maxLength={400} />
+          </Field>
+        </div>
+      </fieldset>
+
       {state.error ? (
         <p className="rounded-md bg-bad-bg px-3 py-2 text-sm font-semibold text-bad">
           {state.error}

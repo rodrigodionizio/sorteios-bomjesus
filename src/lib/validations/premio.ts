@@ -13,7 +13,7 @@ export const premioSchema = z.object({
   descricao: z.string().trim().max(400, "Descrição muito longa.").optional(),
   // Campo de dinheiro vazio chega como "" e `z.coerce.number()` transformaria
   // isso em 0 — um prêmio "de R$ 0,00", que é diferente de "sem valor
-  // declarado". A moto não tem valor publicado; R$ 2.000 tem.
+  // declarado" — a paróquia pode não querer publicar o valor de um prêmio.
   valor: z
     .union([z.literal(""), z.coerce.number().min(0, "Valor inválido.")])
     .optional()

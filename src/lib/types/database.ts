@@ -143,11 +143,13 @@ export interface Database {
           // schema-v13: qual prêmio do sorteio este resultado representa.
           // A única passou de (sorteio_id) para (sorteio_id, ordem).
           ordem: number;
+          // migration 16: o prêmio a que este número pertence. Ver
+          // `fn_apurar_premio` — é o único caminho de escrita.
+          premio_id: string;
           numero_sorteado: number;
           vendedor_id: string | null;
           cartela_confirmada: boolean;
-          // Só preenchido no prêmio 1: o maior vendedor é do sorteio,
-          // não da sequência de prêmios.
+          // Resolvido uma vez, na primeira apuração do sorteio.
           maior_vendedor_id: string | null;
           sorteado_em: string;
           registrado_por: string | null;
@@ -156,6 +158,7 @@ export interface Database {
           id?: string;
           sorteio_id: string;
           ordem?: number;
+          premio_id: string;
           numero_sorteado: number;
           vendedor_id?: string | null;
           cartela_confirmada?: boolean;
@@ -396,6 +399,9 @@ export interface Database {
           valor: number | null;
           quantidade: number;
           exibir_publico: boolean;
+          // migration 16: exatamente um por sorteio, sempre de cartela
+          // sorteada. Só muda por `fn_definir_premio_principal`.
+          principal: boolean;
           criado_por: string | null;
           criado_em: string;
         };
@@ -413,6 +419,7 @@ export interface Database {
           valor?: number | null;
           quantidade?: number;
           exibir_publico?: boolean;
+          principal?: boolean;
           criado_por?: string | null;
           criado_em?: string;
         };
@@ -448,6 +455,31 @@ export interface Database {
       };
     };
     Views: {
+      // migration 16 — um registro por prêmio PÚBLICO, com o vencedor já
+      // resolvido pelo banco. O site só lê; não calcula vencedor nenhum.
+      vw_premiados_publico: {
+        Row: {
+          sorteio_id: string;
+          premio_id: string;
+          ordem: number;
+          categoria:
+            | "cartela_sorteada"
+            | "maior_vendedor"
+            | "vendedor_cartela_premiada"
+            | "outro";
+          titulo: string;
+          descricao: string | null;
+          valor: number | null;
+          quantidade: number;
+          principal: boolean;
+          apurado: boolean;
+          numero_sorteado: number | null;
+          nome_comprador: string | null;
+          vendedor_nome: string | null;
+          venda_confirmada: boolean | null;
+        };
+        Relationships: [];
+      };
       vw_ranking_vendedores: {
         Row: {
           sorteio_id: string;
@@ -535,6 +567,34 @@ export interface Database {
       };
     };
     Functions: {
+      // migration 16 ------------------------------------------------------
+      fn_criar_sorteio: {
+        Args: {
+          p_nome: string;
+          p_descricao: string | null;
+          p_cartela_min: number;
+          p_cartela_max: number;
+          p_preco_cartela: number;
+          p_data_sorteio: string | null;
+          p_premio_titulo: string;
+          p_premio_descricao: string | null;
+          p_premio_valor: number | null;
+        };
+        Returns: string;
+      };
+      fn_definir_premio_principal: {
+        Args: { p_premio_id: string };
+        Returns: undefined;
+      };
+      fn_apurar_premio: {
+        Args: { p_premio_id: string; p_numero_sorteado: number };
+        Returns: string;
+      };
+      fn_sorteio_apurado: {
+        Args: { p_sorteio_id: string };
+        Returns: boolean;
+      };
+      // -------------------------------------------------------------------
       // schema-v12 — consulta pública pelo código do carimbo
       fn_verificar_cartela: {
         Args: { p_codigo: string };
@@ -555,11 +615,6 @@ export interface Database {
           telefone: string;
           confirmada: boolean;
         }[];
-      };
-      fn_registrar_resultado_sorteio: {
-        // `p_ordem` tem default 1 no banco (schema-v13)
-        Args: { p_sorteio_id: string; p_numero_sorteado: number; p_ordem?: number };
-        Returns: string;
       };
       fn_vincular_vendedor: {
         Args: { p_telefone: string; p_codigo: string };

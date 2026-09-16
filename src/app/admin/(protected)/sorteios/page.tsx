@@ -7,6 +7,7 @@ import { SorteioForm } from "./sorteio-form";
 import { StatusActions } from "./status-actions";
 import { CodigoDiretoriaCell } from "./codigo-diretoria-cell";
 import { PixChaveCell } from "./pix-chave-cell";
+import { PremioPrincipalCell } from "./premio-principal-cell";
 
 export default async function SorteiosPage() {
   const supabase = await createClient();
@@ -19,10 +20,16 @@ export default async function SorteiosPage() {
       supabase.from("pix_chaves").select("id, apelido").eq("ativa", true).order("apelido"),
     ]);
 
-  // Só a contagem por sorteio — a lista completa vive na tela de prêmios.
-  const { data: premios } = await supabase
-    .from("premios_sorteio")
-    .select("sorteio_id, categoria");
+  const [{ data: premios }, { data: resultados }] = await Promise.all([
+    supabase
+      .from("premios_sorteio")
+      .select("id, sorteio_id, categoria, titulo, principal, ordem")
+      .order("ordem"),
+    // Só para saber quais sorteios já têm apuração: a premiação deles está
+    // congelada e o prêmio principal não pode mais ser trocado.
+    supabase.from("resultados_sorteio").select("sorteio_id"),
+  ]);
+  const apurados = new Set((resultados ?? []).map((r) => r.sorteio_id));
 
   return (
     <>
@@ -43,6 +50,7 @@ export default async function SorteiosPage() {
                 <th className="px-3 py-2.5">Preço</th>
                 <th className="px-3 py-2.5">Confirmado</th>
                 <th className="px-3 py-2.5">Sorteio em</th>
+                <th className="px-3 py-2.5">Prêmio principal</th>
                 <th className="px-3 py-2.5">Prêmios</th>
                 <th className="px-3 py-2.5">Chave Pix</th>
                 <th className="px-3 py-2.5">Painel da diretoria</th>
@@ -87,6 +95,26 @@ export default async function SorteiosPage() {
                       {s.data_sorteio ? formatDate(`${s.data_sorteio}T00:00:00`) : "—"}
                     </td>
                     <td className="px-3 py-2.5">
+                      <PremioPrincipalCell
+                        sorteioId={s.id}
+                        apurado={apurados.has(s.id) || s.status === "encerrado"}
+                        principal={(() => {
+                          const p = (premios ?? []).find(
+                            (x) => x.sorteio_id === s.id && x.principal,
+                          );
+                          return p ? { id: p.id, titulo: p.titulo } : null;
+                        })()}
+                        candidatos={(premios ?? [])
+                          .filter(
+                            (x) =>
+                              x.sorteio_id === s.id &&
+                              x.categoria === "cartela_sorteada" &&
+                              !x.principal,
+                          )
+                          .map((x) => ({ id: x.id, titulo: x.titulo }))}
+                      />
+                    </td>
+                    <td className="px-3 py-2.5">
                       <PremiosCell
                         sorteioId={s.id}
                         cadastrados={
@@ -122,7 +150,7 @@ export default async function SorteiosPage() {
               })}
               {(sorteios ?? []).length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-3 py-6 text-center text-muted-foreground">
+                  <td colSpan={11} className="px-3 py-6 text-center text-muted-foreground">
                     Nenhum sorteio cadastrado ainda.
                   </td>
                 </tr>

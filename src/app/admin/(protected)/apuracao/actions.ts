@@ -7,9 +7,17 @@ export type ApuracaoState = {
   error?: string;
 };
 
-export async function apurarSorteio(
+/**
+ * Apura UM PRÊMIO: registra o número sorteado para aquele prêmio.
+ *
+ * Toda regra mora em `fn_apurar_premio` (migration 16) — inclusive a
+ * recusa quando o sorteio não tem prêmio principal e a correção de um
+ * número já apurado. A escrita direta em `resultados_sorteio` foi revogada:
+ * não existe outro caminho.
+ */
+export async function apurarPremio(
   sorteioId: string,
-  ordem: number,
+  premioId: string,
   _prevState: ApuracaoState,
   formData: FormData,
 ): Promise<ApuracaoState> {
@@ -19,12 +27,9 @@ export async function apurarSorteio(
   }
 
   const supabase = await createClient();
-  // `p_ordem` diz qual prêmio está sendo apurado. Sem ele, o banco assume 1
-  // — e o 2º prêmio sobrescreveria o 1º.
-  const { error } = await supabase.rpc("fn_registrar_resultado_sorteio", {
-    p_sorteio_id: sorteioId,
+  const { error } = await supabase.rpc("fn_apurar_premio", {
+    p_premio_id: premioId,
     p_numero_sorteado: numero,
-    p_ordem: ordem,
   });
 
   if (error) {
@@ -34,6 +39,7 @@ export async function apurarSorteio(
   revalidatePath("/admin/apuracao");
   revalidatePath("/admin");
   revalidatePath("/admin/sorteios");
+  revalidatePath(`/admin/sorteios/${sorteioId}/premios`);
   // A home é ISR (5 min) e mostra a faixa de resultado. Sem isto, o número
   // apurado levaria até 5 minutos para aparecer lá.
   revalidatePath("/");

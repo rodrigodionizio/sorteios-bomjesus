@@ -16,7 +16,12 @@ import {
 } from "@/lib/premios";
 import { RealtimeRefresher } from "@/components/placar/realtime-refresher";
 import { ResultadoFinal } from "@/components/placar/resultado-final";
-import { montarPremiados, type ResultadoPublico } from "@/lib/resultado";
+import {
+  montarPremiados,
+  premiosDasLinhas,
+  formatarNumeroCartela,
+  type PremiadoPublico,
+} from "@/lib/resultado";
 
 /**
  * O placar. Ficava na raiz do site — a raiz agora é a landing, e cada
@@ -87,8 +92,7 @@ export default async function PlacarPage({ params }: Params) {
     { data: sorteios },
     { data: ranking },
     { data: resumoRows },
-    { data: resultado },
-    { data: premios },
+    { data: linhasPremiados },
   ] = await Promise.all([
     supabase
       .from("sorteios")
@@ -103,17 +107,10 @@ export default async function PlacarPage({ params }: Params) {
       .eq("sorteio_id", sorteio.id)
       .order("posicao", { ascending: true }),
     supabase.from("vw_resumo_sorteio").select("*").eq("sorteio_id", sorteio.id).limit(1),
-    // Uma linha por prêmio desde a migration 13. `.maybeSingle()` aqui dava
-    // erro assim que o 2º prêmio fosse apurado.
+    // Premiação e vencedores numa consulta só: a view já filtra os prêmios
+    // públicos e resolve quem ganhou cada um (migration 16).
     supabase
-      .from("vw_resultado_publico")
-      .select("*")
-      .eq("sorteio_id", sorteio.id)
-      .order("ordem"),
-    // A RLS já filtra por `exibir_publico` — não é preciso (nem seguro)
-    // confiar num filtro só do lado do cliente.
-    supabase
-      .from("premios_sorteio")
+      .from("vw_premiados_publico")
       .select("*")
       .eq("sorteio_id", sorteio.id)
       .order("ordem"),
@@ -125,7 +122,11 @@ export default async function PlacarPage({ params }: Params) {
   const resto = ranking?.slice(1) ?? [];
   const top5resto = resto.slice(0, 4);
   const demais = resto.slice(4);
-  const listaPremios = (premios ?? []) as Premio[];
+  const linhas = (linhasPremiados ?? []) as PremiadoPublico[];
+  const listaPremios = premiosDasLinhas(linhas);
+  // Durante a apuração o sorteio ainda está em andamento: os números já
+  // sorteados aparecem aqui, acima do ranking.
+  const cartelasApuradas = montarPremiados(linhas).filter((p) => p.tipo === "cartela");
 
   const horaAtualizacao = new Intl.DateTimeFormat("pt-BR", {
     timeZone: "America/Fortaleza",
@@ -230,26 +231,32 @@ export default async function PlacarPage({ params }: Params) {
           <PremiacaoResumo premios={listaPremios} />
         </div>
 
-        {(resultado ?? []).length > 0 ? (
+        {cartelasApuradas.length > 0 ? (
           <div className="mb-8 rounded-2xl bg-gradient-to-br from-vinho to-vinho-deep p-5 text-bege shadow-sm sm:p-7">
             <div className="flex items-center gap-1.5 text-[11.5px] font-extrabold uppercase tracking-wide text-bege/70">
               <TrophyIcon className="size-4" />{" "}
-              {(resultado ?? []).length > 1
-                ? "Resultados do sorteio"
-                : "Resultado do sorteio"}
+              {cartelasApuradas.length > 1 ? "Resultados do sorteio" : "Resultado do sorteio"}
             </div>
 
             <div className="mt-2 flex flex-col gap-4">
-              {(resultado ?? []).map((premio, i) => (
+              {cartelasApuradas.map((premio, i) => (
                 <div
-                  key={premio.ordem}
+                  key={premio.chave}
                   className={i > 0 ? "border-t border-bege/15 pt-4" : ""}
                 >
+                  {premio.tipo === "cartela" && premio.principal ? (
+                    <div className="mb-1 text-[10.5px] font-black uppercase tracking-[0.1em] text-dourado">
+                      Prêmio principal
+                    </div>
+                  ) : null}
                   <h2 className="text-[21px] font-black leading-tight sm:text-[25px]">
-                    {(resultado ?? []).length > 1
-                      ? `${premio.ordem}º prêmio — `
-                      : "A cartela premiada foi a "}
-                    <span className="text-dourado">nº {premio.numero_sorteado}</span>
+                    {premio.titulo} —{" "}
+                    <span className="text-dourado">
+                      nº{" "}
+                      {premio.tipo === "cartela"
+                        ? formatarNumeroCartela(premio.numero, sorteio.cartela_max)
+                        : ""}
+                    </span>
                   </h2>
                   <div className="mt-2.5 grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
@@ -257,7 +264,7 @@ export default async function PlacarPage({ params }: Params) {
                         Comprador(a) da cartela
                       </div>
                       <div className="mt-0.5 text-[17px] font-black">
-                        {premio.nome_comprador ?? "Não informado"}
+                        {(premio.tipo === "cartela" && premio.comprador) || "Não informado"}
                       </div>
                     </div>
                     <div>
@@ -265,7 +272,7 @@ export default async function PlacarPage({ params }: Params) {
                         Vendida por
                       </div>
                       <div className="mt-0.5 text-[17px] font-black">
-                        {premio.vendedor_premiado_nome ?? "—"}
+                        {premio.vendedor ?? "—"}
                       </div>
                     </div>
                   </div>
@@ -473,6 +480,11 @@ function PremiacaoResumo({ premios }: { premios: Premio[] }) {
       <ul className="flex flex-col gap-2.5">
         {[...paraComprador, ...paraVendedor].map((p) => (
           <li key={p.id} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            {p.principal ? (
+              <span className="rounded-full bg-dourado px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#3a1400]">
+                Prêmio principal
+              </span>
+            ) : null}
             <strong className="text-[15.5px] font-black leading-tight">
               {rotuloPremio(p)}
             </strong>
@@ -502,8 +514,8 @@ function PremiacaoResumo({ premios }: { premios: Premio[] }) {
  *
  * Sem ranking, sem KPI, sem barra de progresso e sem `RealtimeRefresher` —
  * não há mais o que atualizar. O bloco de resultado vinho do placar ao vivo
- * continua existindo lá embaixo, para o intervalo em que o 1º prêmio já foi
- * apurado mas o sorteio ainda não foi encerrado.
+ * continua existindo, para o intervalo em que algum prêmio já foi apurado
+ * mas o sorteio ainda não foi encerrado.
  */
 async function PaginaResultado({
   sorteio,
@@ -518,24 +530,16 @@ async function PaginaResultado({
 }) {
   const supabase = createPublicClient();
 
-  const [{ data: resultados }, { data: premios }] = await Promise.all([
-    supabase
-      .from("vw_resultado_publico")
-      .select("*")
-      .eq("sorteio_id", sorteio.id)
-      .order("ordem"),
-    supabase
-      .from("premios_sorteio")
-      .select("*")
-      .eq("sorteio_id", sorteio.id)
-      .order("ordem"),
-  ]);
+  // Vencedores resolvidos pelo banco (migration 16). A página só exibe.
+  const { data } = await supabase
+    .from("vw_premiados_publico")
+    .select("*")
+    .eq("sorteio_id", sorteio.id)
+    .order("ordem");
 
-  const listaPremios = (premios ?? []) as Premio[];
-  const premiados = montarPremiados(
-    (resultados ?? []) as ResultadoPublico[],
-    listaPremios,
-  );
+  const linhas = (data ?? []) as PremiadoPublico[];
+  const listaPremios = premiosDasLinhas(linhas);
+  const premiados = montarPremiados(linhas);
 
   return (
     <div className="min-h-screen bg-[#fbf3e2] px-4 py-8 text-[#2a0d13] sm:px-8 sm:py-10 lg:px-16">

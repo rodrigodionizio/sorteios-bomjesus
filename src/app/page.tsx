@@ -9,7 +9,8 @@ import { DESTINATARIO, rotuloPremio, type Premio } from "@/lib/premios";
 import {
   formatarNumeroCartela,
   montarPremiados,
-  type ResultadoPublico,
+  premiosDasLinhas,
+  type PremiadoPublico,
 } from "@/lib/resultado";
 import { FaixaResultado } from "@/components/placar/faixa-resultado";
 
@@ -50,32 +51,39 @@ export const metadata: Metadata = {
 export default async function LandingPage() {
   const supabase = createPublicClient();
 
-  const [{ data: sorteios }, { data: resumos }, { data: premios }, { data: resultados }] =
+  const [{ data: sorteios }, { data: resumos }, { data: premiados }] =
     await Promise.all([
       supabase.from("sorteios").select("*").order("created_at", { ascending: false }),
       supabase.from("vw_resumo_sorteio").select("*"),
-      supabase.from("premios_sorteio").select("*").order("ordem"),
-      supabase.from("vw_resultado_publico").select("*").order("ordem"),
+      // Premiação pública e vencedores já resolvidos pelo banco (migration 16).
+      supabase.from("vw_premiados_publico").select("*").order("ordem"),
     ]);
 
   const todos = sorteios ?? [];
   const emAndamento = todos.filter((s) => s.status === "em_andamento");
 
-  const premiosDe = (sorteioId: string) =>
-    ((premios ?? []) as Premio[]).filter((p) => p.sorteio_id === sorteioId);
-  const resultadosDe = (sorteioId: string) =>
-    ((resultados ?? []) as ResultadoPublico[]).filter((r) => r.sorteio_id === sorteioId);
+  const linhasDe = (sorteioId: string) =>
+    ((premiados ?? []) as PremiadoPublico[]).filter((l) => l.sorteio_id === sorteioId);
+  const premiosDe = (sorteioId: string): Premio[] => premiosDasLinhas(linhasDe(sorteioId));
+  // O cartão de encerrado mostra a cartela do prêmio principal — a view já
+  // entrega o principal primeiro.
+  const cartelaPrincipal = (sorteioId: string) => {
+    const c = montarPremiados(linhasDe(sorteioId)).find((p) => p.tipo === "cartela");
+    return c && c.tipo === "cartela"
+      ? { numero_sorteado: c.numero, nome_comprador: c.comprador }
+      : undefined;
+  };
 
   // O destaque dourado: o encerrado mais recente QUE TENHA APURAÇÃO. Um
   // sorteio encerrado sem resultado registrado não tem o que destacar.
   // `sorteios` já vem do mais novo para o mais antigo.
   const destaque = todos.find(
-    (s) => s.status === "encerrado" && resultadosDe(s.id).length > 0,
+    (s) => s.status === "encerrado" && linhasDe(s.id).some((l) => l.apurado),
   );
   const faixaResultado = destaque ? (
     <FaixaResultado
       sorteio={destaque}
-      premiados={montarPremiados(resultadosDe(destaque.id), premiosDe(destaque.id))}
+      premiados={montarPremiados(linhasDe(destaque.id))}
     />
   ) : null;
 
@@ -164,7 +172,7 @@ export default async function LandingPage() {
                     <CardEncerrado
                       key={s.id}
                       sorteio={s}
-                      premiado={(resultados ?? []).find((r) => r.sorteio_id === s.id)}
+                      premiado={cartelaPrincipal(s.id)}
                     />
                   ))}
                 </div>
@@ -174,7 +182,9 @@ export default async function LandingPage() {
         ) : (
           <>
             {faixaResultado ? <div className="pt-7 sm:pt-9">{faixaResultado}</div> : null}
-            <SemSorteioAtivo encerrados={encerrados} resultados={resultados ?? []} />
+            <SemSorteioAtivo
+              encerrados={encerrados.map((s) => ({ sorteio: s, premiado: cartelaPrincipal(s.id) }))}
+            />
           </>
         )}
       </main>
@@ -432,10 +442,11 @@ function Atalhos() {
  */
 function SemSorteioAtivo({
   encerrados,
-  resultados,
 }: {
-  encerrados: SorteioRow[];
-  resultados: { sorteio_id: string; numero_sorteado: number; nome_comprador: string | null }[];
+  encerrados: {
+    sorteio: SorteioRow;
+    premiado?: { numero_sorteado: number; nome_comprador: string | null };
+  }[];
 }) {
   const passos = [
     {
@@ -564,12 +575,8 @@ function SemSorteioAtivo({
         <>
           <RotuloSecao titulo="Sorteios encerrados" nota="o resultado continua no ar" />
           <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
-            {encerrados.map((s) => (
-              <CardEncerrado
-                key={s.id}
-                sorteio={s}
-                premiado={resultados.find((r) => r.sorteio_id === s.id)}
-              />
+            {encerrados.map(({ sorteio, premiado }) => (
+              <CardEncerrado key={sorteio.id} sorteio={sorteio} premiado={premiado} />
             ))}
           </div>
         </>

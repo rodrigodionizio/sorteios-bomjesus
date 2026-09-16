@@ -20,6 +20,9 @@ export async function createSorteio(
     cartela_max: formData.get("cartela_max"),
     preco_cartela: formData.get("preco_cartela"),
     data_sorteio: formData.get("data_sorteio"),
+    premio_titulo: formData.get("premio_titulo"),
+    premio_descricao: formData.get("premio_descricao"),
+    premio_valor: formData.get("premio_valor"),
   });
 
   if (!parsed.success) {
@@ -31,13 +34,18 @@ export async function createSorteio(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("sorteios").insert({
-    nome: parsed.data.nome,
-    descricao: parsed.data.descricao || null,
-    cartela_min: parsed.data.cartela_min,
-    cartela_max: parsed.data.cartela_max,
-    preco_cartela: parsed.data.preco_cartela,
-    data_sorteio: parsed.data.data_sorteio || null,
+  // Sorteio e prêmio principal nascem na MESMA transação (regra 22). Um
+  // `insert` direto em `sorteios` é recusado pelo banco no commit.
+  const { error } = await supabase.rpc("fn_criar_sorteio", {
+    p_nome: parsed.data.nome,
+    p_descricao: parsed.data.descricao || null,
+    p_cartela_min: parsed.data.cartela_min,
+    p_cartela_max: parsed.data.cartela_max,
+    p_preco_cartela: parsed.data.preco_cartela,
+    p_data_sorteio: parsed.data.data_sorteio || null,
+    p_premio_titulo: parsed.data.premio_titulo,
+    p_premio_descricao: parsed.data.premio_descricao || null,
+    p_premio_valor: parsed.data.premio_valor,
   });
 
   if (error) {
@@ -46,7 +54,31 @@ export async function createSorteio(
 
   revalidatePath("/admin/sorteios");
   revalidatePath("/admin");
+  revalidatePath("/");
   return {};
+}
+
+/**
+ * Define ou troca o prêmio principal (regra 22).
+ *
+ * A tela conduz os dois passos — rebaixar o atual, promover o novo — com os
+ * alertas de risco; o banco executa os dois JUNTOS em
+ * `fn_definir_premio_principal`, para que o sorteio nunca fique sem
+ * principal entre um passo e outro. Recusa sozinho depois da apuração.
+ */
+export async function definirPremioPrincipal(premioId: string, sorteioId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("fn_definir_premio_principal", {
+    p_premio_id: premioId,
+  });
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/sorteios");
+  revalidatePath(`/admin/sorteios/${sorteioId}/premios`);
+  revalidatePath("/admin/apuracao");
+  revalidatePath("/");
+  revalidatePath(`/placar/${sorteioId}`);
 }
 
 export async function updateSorteioStatus(

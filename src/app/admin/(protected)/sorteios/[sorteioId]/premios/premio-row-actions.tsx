@@ -65,7 +65,18 @@ export function PremioRowActions({
 
       <EditPremioDialog premio={premio} />
 
-      <RemoverPremioButton premio={premio} />
+      {/* O banco recusa remover o principal (regra 22). Primeiro promove-se
+          outro prêmio a principal, na tela Sorteios. */}
+      {premio.principal ? (
+        <span
+          className="h-9 px-2.5 text-[11.5px] font-bold leading-9 text-muted-foreground"
+          title="Para remover, promova outro prêmio a principal na tela Sorteios."
+        >
+          principal
+        </span>
+      ) : (
+        <RemoverPremioButton premio={premio} />
+      )}
     </div>
   );
 }
@@ -106,6 +117,7 @@ function EditPremioDialog({ premio }: { premio: Premio }) {
               para diálogos neste projeto. */}
           <PremioFields
             key={String(open)}
+            categoriaTravada={premio.principal}
             valores={{
               categoria: premio.categoria,
               titulo: premio.titulo,

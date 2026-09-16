@@ -1,4 +1,4 @@
-import { TrophyIcon } from "lucide-react";
+import { StarIcon, TrophyIcon } from "lucide-react";
 import { formatInt } from "@/lib/format";
 import { formatarNumeroCartela, type Premiado } from "@/lib/resultado";
 import { DESCRICAO_CATEGORIA, rotuloPremio, valorTotal, type Premio } from "@/lib/premios";
@@ -11,8 +11,9 @@ import { DESCRICAO_CATEGORIA, rotuloPremio, valorTotal, type Premio } from "@/li
  * público; o que as pessoas vêm procurar é quem ganhou. Por isso esta tela
  * não reaproveita o placar com blocos escondidos: é outra tela.
  *
- * Nada aqui é dado novo. Nome do comprador e nome do vendedor já saem em
- * `vw_resultado_publico`; contato e telefone continuam fora.
+ * Nada aqui é calculado: os vencedores chegam resolvidos por
+ * `vw_premiados_publico` (migration 16). Nome do comprador e do vendedor
+ * sim; contato e telefone nunca.
  */
 export function ResultadoFinal({
   sorteio,
@@ -78,6 +79,11 @@ export function ResultadoFinal({
                 key={p.id}
                 className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b border-border px-4 py-3 last:border-none"
               >
+                {p.principal ? (
+                  <span className="rounded-full bg-dourado px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#3a1400]">
+                    Prêmio principal
+                  </span>
+                ) : null}
                 <strong className="text-[14.5px] font-black">{rotuloPremio(p)}</strong>
                 {valorTotal(p) && p.quantidade > 1 ? (
                   <span className="text-[12px] font-bold text-dourado-deep">
@@ -104,13 +110,18 @@ function CartaoPremiado({
   cartelaMax: number;
 }) {
   return (
-    <div className="rounded-xl border border-[#3a1400]/13 bg-[#fffdf8]/72 p-4">
-      <div className="text-[10px] font-black uppercase tracking-[0.1em] text-dourado-deep">
+    <div
+      className={`rounded-xl border bg-[#fffdf8]/72 p-4 ${
+        premiado.tipo === "cartela" && premiado.principal
+          ? "border-[#3a1400]/35 sm:col-span-2"
+          : "border-[#3a1400]/13"
+      }`}
+    >
+      <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.1em] text-dourado-deep">
+        {premiado.tipo === "cartela" && premiado.principal ? <StarIcon className="size-3" /> : null}
         {premiado.tipo === "venda" ? "Prêmio de venda" : premiado.rotulo}
       </div>
-      {premiado.titulo ? (
-        <div className="mt-0.5 text-[15px] font-black leading-tight">{premiado.titulo}</div>
-      ) : null}
+      <div className="mt-0.5 text-[15px] font-black leading-tight">{premiado.titulo}</div>
 
       {premiado.tipo === "cartela" ? (
         <>
